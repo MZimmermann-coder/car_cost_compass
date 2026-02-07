@@ -9,6 +9,14 @@
   const car = $derived(appState.cars.find((item) => item.id === carId));
   const metrics = $derived(car ? computeOverviewMetrics(car, appState.settings) : null);
   const breakdown = $derived(car ? computeYearlyBreakdown(car, appState.settings) : []);
+
+  function handleBack() {
+    if (typeof history !== "undefined" && history.length > 1) {
+      history.back();
+      return;
+    }
+    navigateTo("garage");
+  }
 </script>
 
 {#if !car}
@@ -23,6 +31,7 @@
       <h1>Detailanalyse</h1>
       <p>{car.marke} {car.modell} {car.modellvariante}</p>
     </div>
+    <button class="button ghost" onclick={handleBack}>Zurück</button>
   </div>
 
   <div class="summary-strip">

@@ -94,14 +94,17 @@ export function navigateTo(view) {
   if (view === "overview") {
     uiState.currentView = "garage";
     uiState.garageMode = "table";
+    pushHistory("garage");
     return;
   }
   uiState.currentView = view;
+  pushHistory(view);
 }
 
 export function viewCarDetail(carId) {
   uiState.selectedCarId = carId;
   uiState.currentView = "detail";
+  pushHistory("detail", carId);
 }
 
 export function normalizeState(raw) {
@@ -163,4 +166,51 @@ export function initializeFromStore() {
 }
 
 initializeFromStore();
+
+let handlingPopstate = false;
+
+function applyHistoryState(state) {
+  if (!state || typeof state !== "object") {
+    return;
+  }
+  uiState.currentView = state.view || "garage";
+  uiState.selectedCarId = state.carId ?? null;
+  if (state.garageMode) {
+    uiState.garageMode = state.garageMode;
+  }
+  if (uiState.currentView === "detail" && !uiState.selectedCarId) {
+    uiState.currentView = "garage";
+  }
+}
+
+function pushHistory(view, carId = null) {
+  if (handlingPopstate || typeof history === "undefined") {
+    return;
+  }
+  const state = {
+    view,
+    carId,
+    garageMode: uiState.garageMode
+  };
+  history.pushState(state, "", "");
+}
+
+function initHistory() {
+  if (typeof window === "undefined" || typeof history === "undefined") {
+    return;
+  }
+  const initialState = {
+    view: uiState.currentView,
+    carId: uiState.selectedCarId,
+    garageMode: uiState.garageMode
+  };
+  history.replaceState(initialState, "", "");
+  window.addEventListener("popstate", (event) => {
+    handlingPopstate = true;
+    applyHistoryState(event.state);
+    handlingPopstate = false;
+  });
+}
+
+initHistory();
 

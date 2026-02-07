@@ -324,12 +324,15 @@ textarea:disabled {
   flex-wrap: wrap;
   gap: 0.35rem 0.5rem;
   margin-top: 0.4rem;
+  align-items: flex-start;
+  align-content: flex-start;
   min-height: var(--chip-row-height, auto);
 }
 
 .chip {
   font-size: 0.72rem;
   padding: 0 0.55rem;
+  height: 24px;
   border-radius: 999px;
   background: #f1ede8;
   color: #4a4640;
@@ -338,7 +341,6 @@ textarea:disabled {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  min-height: 24px;
   line-height: 1;
 }
 
