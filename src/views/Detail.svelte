@@ -1,14 +1,110 @@
-<script>
+﻿<script>
   import { appState, navigateTo } from "../lib/state.svelte.js";
-  import { computeOverviewMetrics, computeYearlyBreakdown } from "../lib/compute.js";
-  import { formatCurrency } from "../lib/format.js";
+  import { computeOverviewMetrics, computeYearlyBreakdown, num } from "../lib/compute.js";
+  import { formatCurrency, formatNumber } from "../lib/format.js";
   import CostTable from "../components/CostTable.svelte";
+  import CarCard from "../components/CarCard.svelte";
+  import CarEditor from "../components/CarEditor.svelte";
+  import CostChart from "../components/CostChart.svelte";
 
   let { carId } = $props();
 
   const car = $derived(appState.cars.find((item) => item.id === carId));
   const metrics = $derived(car ? computeOverviewMetrics(car, appState.settings) : null);
   const breakdown = $derived(car ? computeYearlyBreakdown(car, appState.settings) : []);
+  const planningYears = $derived(Math.max(0, Math.round(num(appState.settings.planungshorizont))));
+
+  const consumptionUnit = $derived(car?.kraftstoffart === "Elektro" ? "kWh/100km" : "L/100km");
+
+  let hoverYear = $state(null);
+  let editorOpen = $state(false);
+  let editingCar = $state(null);
+
+  const infoItems = $derived.by(() => {
+    if (!car) return [];
+    const isPurchase = car.beschaffungsart === "Kauf";
+    const isLease = car.beschaffungsart === "Leasing";
+    const isNew = car.neu === "Neu";
+    const isElectric = car.kraftstoffart === "Elektro";
+    const items = [
+      { label: "Zustand", value: car.neu || "-" },
+      { label: "Versicherungsart", value: car.versicherungsart || "-" },
+      { label: "SF-Klasse", value: car.sfklasse || "-" },
+      {
+        label: "Versicherung / Monat",
+        value: num(car.versicherung) ? formatCurrency(num(car.versicherung)) : "-"
+      },
+      {
+        label: "Steuer / Monat",
+        value: num(car.steuerMonat) ? formatCurrency(num(car.steuerMonat)) : "-"
+      },
+      {
+        label: "Wartung / Monat",
+        value: num(car.wartung) ? formatCurrency(num(car.wartung)) : "-"
+      },
+      {
+        label: "Reparatur / Monat",
+        value: num(car.reparatur) ? formatCurrency(num(car.reparatur)) : "-"
+      },
+      {
+        label: "Verbrauch",
+        value: num(car.verbrauch) ? `${formatNumber(num(car.verbrauch))} ${consumptionUnit}` : "-"
+      }
+    ];
+
+    if (isPurchase) {
+      items.splice(1, 0, {
+        label: "Kaufpreis",
+        value: num(car.kaufpreis) ? formatCurrency(num(car.kaufpreis)) : "-"
+      });
+      if (isNew) {
+        items.splice(2, 0,
+          { label: "Rabatt", value: num(car.rabatt) ? formatCurrency(num(car.rabatt)) : "-" },
+          {
+            label: "Steuerliche Mehrbelastung",
+            value: num(car.steuerMehr) ? formatCurrency(num(car.steuerMehr)) : "-"
+          }
+        );
+      }
+    }
+
+    if (isLease) {
+      items.splice(1, 0, {
+        label: "Leasingrate",
+        value: num(car.leasingrate) ? formatCurrency(num(car.leasingrate)) : "-"
+      });
+    }
+
+    if (isElectric) {
+      items.push(
+        {
+          label: "Ladeleistung",
+          value: num(car.ladeleistung) ? `${formatNumber(num(car.ladeleistung))} kW` : "-"
+        },
+        {
+          label: "THG-Quote",
+          value: num(car.thg) ? `${formatNumber(num(car.thg))} €/Jahr` : "-"
+        }
+      );
+    }
+
+    return items;
+  });
+
+  const summaryTooltips = $derived.by(() => {
+    if (!car || !metrics) return {};
+    const purchasePrice = car.beschaffungsart === "Kauf" ? num(car.kaufpreis) : 0;
+    const cumulative = breakdown.length ? breakdown[breakdown.length - 1].cumulative : 0;
+    const tcoTotal = metrics.tcoTotal ?? 0;
+    const tcoMonat = planningYears > 0 ? tcoTotal / (planningYears * 12) : 0;
+    const restwert = breakdown.length ? breakdown[breakdown.length - 1].restwert : 0;
+
+    return {
+      tcoTotal: `Kumulierte Gesamtkosten ${formatCurrency(cumulative)} - Kaufpreis ${formatCurrency(purchasePrice)} = ${formatCurrency(tcoTotal)}`,
+      tcoMonat: `TCO gesamt ${formatCurrency(tcoTotal)} / (${planningYears} Jahre x 12 Monate) = ${formatCurrency(tcoMonat)}`,
+      restwert: `Restwert nach ${planningYears} Jahren = ${formatCurrency(restwert)}`
+    };
+  });
 
   function handleBack() {
     if (typeof history !== "undefined" && history.length > 1) {
@@ -16,6 +112,17 @@
       return;
     }
     navigateTo("garage");
+  }
+
+  function openEditor() {
+    if (!car) return;
+    editingCar = car;
+    editorOpen = true;
+  }
+
+  function closeEditor() {
+    editorOpen = false;
+    editingCar = null;
   }
 </script>
 
@@ -25,6 +132,8 @@
     <p>Das Fahrzeug existiert nicht mehr. Kehre zur Garage zurück.</p>
     <button class="button" onclick={() => navigateTo("garage")}>Zur Garage</button>
   </div>
+{:else if editorOpen}
+  <CarEditor car={editingCar} onClose={closeEditor} fullScreen={true} />
 {:else}
   <div class="section-title">
     <div>
@@ -34,26 +143,81 @@
     <button class="button ghost" onclick={handleBack}>Zurück</button>
   </div>
 
-  <div class="summary-strip">
-    <div class="summary-item">
-      <div class="kpi-label">TCO gesamt</div>
-      <div class="value">{formatCurrency(metrics?.tcoTotal ?? 0)}</div>
+  <section class="detail-section">
+    <h2>Fahrzeug</h2>
+    <div class="detail-general">
+      <CarCard
+        car={car}
+        metrics={metrics}
+        interactive={false}
+        showActions={true}
+        actions={{ edit: true, duplicate: false, view: false, delete: false }}
+        onEdit={openEditor}
+        variant="detail"
+      />
+      <div class="card info-card">
+        <h3>Weitere Fahrzeugdaten</h3>
+        <div class="info-grid">
+          {#each infoItems as item}
+            <div class="info-item">
+              <span class="info-label">{item.label}</span>
+              <span class="info-value">{item.value}</span>
+            </div>
+          {/each}
+        </div>
+      </div>
     </div>
-    <div class="summary-item">
-      <div class="kpi-label">TCO/Monat</div>
-      <div class="value">{formatCurrency(metrics?.tcoMonat ?? 0)}</div>
-    </div>
-    <div class="summary-item">
-      <div class="kpi-label">Restwert</div>
-      <div class="value">{formatCurrency(metrics?.restwert ?? 0)}</div>
-    </div>
-  </div>
+  </section>
 
-  <CostTable rows={breakdown} />
-  {#if car.kommentar}
-    <div class="card">
-      <h3>Kommentar</h3>
-      <div class="comment-text">{car.kommentar}</div>
+  <section class="detail-section">
+    <h2>Finanzen</h2>
+    <div class="summary-strip">
+      <div
+        class="summary-item has-tooltip"
+        data-tooltip={summaryTooltips.tcoTotal}
+      >
+        <div class="kpi-label">TCO gesamt</div>
+        <div class="value">{formatCurrency(metrics?.tcoTotal ?? 0)}</div>
+      </div>
+      <div
+        class="summary-item has-tooltip"
+        data-tooltip={summaryTooltips.tcoMonat}
+      >
+        <div class="kpi-label">TCO/Monat</div>
+        <div class="value">{formatCurrency(metrics?.tcoMonat ?? 0)}</div>
+      </div>
+      <div
+        class="summary-item has-tooltip"
+        data-tooltip={summaryTooltips.restwert}
+      >
+        <div class="kpi-label">Restwert</div>
+        <div class="value">{formatCurrency(metrics?.restwert ?? 0)}</div>
+      </div>
     </div>
-  {/if}
+
+    <CostTable
+      rows={breakdown}
+      car={car}
+      settings={appState.settings}
+      highlightYear={hoverYear}
+      onHoverYear={(year) => (hoverYear = year)}
+    />
+
+    {#if breakdown.length}
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h3>Kostenverlauf</h3>
+          <span class="chart-caption">Planungshorizont: {planningYears} Jahre</span>
+        </div>
+        <div class="chart-wrap">
+          <CostChart
+            rows={breakdown}
+            highlightYear={hoverYear}
+            onHoverYear={(year) => (hoverYear = year)}
+            horizon={planningYears}
+          />
+        </div>
+      </div>
+    {/if}
+  </section>
 {/if}

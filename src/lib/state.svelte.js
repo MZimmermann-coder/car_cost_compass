@@ -7,12 +7,12 @@ const defaultSettings = {
   kostensteigerung: 3,
   planungshorizont: 5,
   depr: {
-    age1: 30,
-    age2_3: 15,
-    age4_5: 10,
-    age6_8: 7,
-    age9_12: 5,
-    age13p: 4
+    age1: 26,
+    age2_3: 14,
+    age4_5: 6,
+    age6_8: 17,
+    age9_12: 15,
+    age13p: 12
   }
 };
 

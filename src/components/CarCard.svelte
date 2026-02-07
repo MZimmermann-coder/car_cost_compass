@@ -1,8 +1,21 @@
-<script>
+﻿<script>
   import { formatCurrency, formatNumber } from "../lib/format.js";
   import { num } from "../lib/compute.js";
 
-  let { car, metrics, onEdit, onDuplicate, onDelete, onView, delay = 0, highlight = false } = $props();
+  let {
+    car,
+    metrics,
+    onEdit,
+    onDuplicate,
+    onDelete,
+    onView,
+    actions = null,
+    delay = 0,
+    highlight = false,
+    interactive = true,
+    showActions = true,
+    variant = ""
+  } = $props();
 
   const title = $derived(`${car.marke || ""} ${car.modell || ""}`.trim());
   const isElectric = $derived(car.kraftstoffart === "Elektro");
@@ -17,6 +30,16 @@
   const ownershipInfo = $derived(getOwnershipInfo(car.beschaffungsart));
   const engineColor = $derived(getEngineColor(fuelInfo.type));
   const engineGlow = $derived(toRgba(engineColor, 0.35));
+  const actionConfig = $derived({
+    edit: actions?.edit ?? true,
+    duplicate: actions?.duplicate ?? true,
+    view: actions?.view ?? true,
+    delete: actions?.delete ?? true
+  });
+  const hasActions = $derived(
+    showActions &&
+      (actionConfig.edit || actionConfig.duplicate || actionConfig.view || actionConfig.delete)
+  );
 
   const kilometerText = $derived(formatValue(car.kilometerstand, "km"));
   const batteryText = $derived(formatValue(car.batterie, "kWh"));
@@ -31,7 +54,7 @@
   });
 
   function handleCardActivate(event) {
-    if (!onView) {
+    if (!interactive || !onView) {
       return;
     }
     if (event?.target?.closest?.(".card-actions")) {
@@ -41,7 +64,7 @@
   }
 
   function handleCardKeydown(event) {
-    if (event?.target?.closest?.(".card-actions")) {
+    if (!interactive || event?.target?.closest?.(".card-actions")) {
       return;
     }
     if (event.key === "Enter" || event.key === " ") {
@@ -187,121 +210,261 @@
   }
 </script>
 
-<div
-  class="card card-animated car-card"
-  class:car-card-highlight={highlight}
-  style={`--brand-color: ${brandColor}; --engine-color: ${engineColor}; --engine-glow: ${engineGlow}; animation-delay: ${delay}ms`}
-  role="button"
-  tabindex="0"
-  aria-label="Detail öffnen"
-  onclick={handleCardActivate}
-  onkeydown={handleCardKeydown}
->
-  <div class="card-accent"></div>
-  <div class="card-header">
-    {#if brandLogoUrl && !logoFailed}
-      <div class="brand-logo">
-        <img
-          src={brandLogoUrl}
-          alt={`${car.marke || "Fahrzeug"} Logo`}
-          loading="lazy"
-          onerror={() => (logoFailed = true)}
-        />
-      </div>
-    {:else}
-      <div class="brand-badge" aria-hidden="true">{brandInitials}</div>
-    {/if}
+{#if interactive}
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <div
+    class="card card-animated car-card"
+    class:car-card-highlight={highlight}
+    class:is-interactive={interactive}
+    class:car-card-detail={variant === "detail"}
+    style={`--brand-color: ${brandColor}; --engine-color: ${engineColor}; --engine-glow: ${engineGlow}; animation-delay: ${delay}ms`}
+    role="button"
+    tabindex="0"
+    aria-label="Detail öffnen"
+    onclick={handleCardActivate}
+    onkeydown={handleCardKeydown}
+  >
+    <div class="card-accent"></div>
+    <div class="card-header">
+      {#if brandLogoUrl && !logoFailed}
+        <div class="brand-logo">
+          <img
+            src={brandLogoUrl}
+            alt={`${car.marke || "Fahrzeug"} Logo`}
+            loading="lazy"
+            onerror={() => (logoFailed = true)}
+          />
+        </div>
+      {:else}
+        <div class="brand-badge" aria-hidden="true">{brandInitials}</div>
+      {/if}
 
-    <div class="card-titles">
-      <div class="card-title">{title || "Unbenannt"}</div>
-      <div class="card-subtitle">{car.modellvariante || "-"}</div>
+      <div class="card-titles">
+        <div class="card-title">{title || "Unbenannt"}</div>
+        <div class="card-subtitle">{car.modellvariante || "-"}</div>
+      </div>
+
+      {#if hasActions}
+        <div class="card-actions compact">
+          {#if actionConfig.edit}
+            <button
+              type="button"
+              class="icon-button"
+              onclick={(event) => {
+                event.stopPropagation();
+                onEdit && onEdit(car);
+              }}
+              aria-label="Bearbeiten"
+              title="Bearbeiten"
+            >
+              <iconify-icon icon="mdi:pencil" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+          {#if actionConfig.duplicate}
+            <button
+              type="button"
+              class="icon-button"
+              onclick={(event) => {
+                event.stopPropagation();
+                onDuplicate && onDuplicate(car);
+              }}
+              aria-label="Duplizieren"
+              title="Duplizieren"
+            >
+              <iconify-icon icon="mdi:content-copy" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+          {#if actionConfig.view}
+            <button
+              type="button"
+              class="icon-button"
+              onclick={(event) => {
+                event.stopPropagation();
+                onView && onView(car);
+              }}
+              aria-label="Detail"
+              title="Detail"
+            >
+              <iconify-icon icon="mdi:eye-outline" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+          {#if actionConfig.delete}
+            <button
+              type="button"
+              class="icon-button danger"
+              onclick={(event) => {
+                event.stopPropagation();
+                onDelete && onDelete(car);
+              }}
+              aria-label="Löschen"
+              title="Löschen"
+            >
+              <iconify-icon icon="mdi:trash-can-outline" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
 
-    <div class="card-actions compact">
-      <button
-        type="button"
-        class="icon-button"
-        onclick={(event) => {
-          event.stopPropagation();
-          onEdit && onEdit(car);
-        }}
-        aria-label="Bearbeiten"
-        title="Bearbeiten"
-      >
-        <iconify-icon icon="mdi:pencil" aria-hidden="true"></iconify-icon>
-      </button>
-      <button
-        type="button"
-        class="icon-button"
-        onclick={(event) => {
-          event.stopPropagation();
-          onDuplicate && onDuplicate(car);
-        }}
-        aria-label="Duplizieren"
-        title="Duplizieren"
-      >
-        <iconify-icon icon="mdi:content-copy" aria-hidden="true"></iconify-icon>
-      </button>
-      <button
-        type="button"
-        class="icon-button"
-        onclick={(event) => {
-          event.stopPropagation();
-          onView && onView(car);
-        }}
-        aria-label="Detail"
-        title="Detail"
-      >
-        <iconify-icon icon="mdi:eye-outline" aria-hidden="true"></iconify-icon>
-      </button>
-      <button
-        type="button"
-        class="icon-button danger"
-        onclick={(event) => {
-          event.stopPropagation();
-          onDelete && onDelete(car);
-        }}
-        aria-label="Löschen"
-        title="Löschen"
-      >
-        <iconify-icon icon="mdi:trash-can-outline" aria-hidden="true"></iconify-icon>
-      </button>
+    <div class="chip-row">
+      <span class={`chip chip-fuel chip-fuel-${fuelInfo.type}`}>
+        <iconify-icon icon={fuelInfo.icon} aria-hidden="true"></iconify-icon>
+        {fuelInfo.label}
+      </span>
+      <span class={`chip chip-ownership chip-ownership-${ownershipInfo.type}`}>{ownershipInfo.label}</span>
+      <span class="chip">Baujahr {car.baujahr || "-"}</span>
+      <span class="chip">{kilometerText}</span>
+      {#if isElectric}
+        <span class="chip">Batterie {batteryText}</span>
+      {/if}
+      {#if isElectric && hasWinterRange}
+        <span class="chip">Winterreichweite {winterRangeText}</span>
+      {/if}
+    </div>
+
+    <div class="card-content">
+      <div class="kpi-panel">
+        <div>
+          <div class="kpi-value">{formatCurrency(metrics?.tcoMonat ?? 0)}</div>
+          <div class="kpi-caption">TCO / Monat</div>
+        </div>
+        <div class="kpi-side">
+          <div class="kpi-side-label">TCO / Jahr</div>
+          <div class="kpi-side-value">{formatCurrency(metrics?.tcoJahr ?? 0)}</div>
+        </div>
+      </div>
+
+      <div class="comment-box">
+        <div class="comment-label">Notiz</div>
+        <div class="card-comment" class:muted={!car.kommentar}>
+          {car.kommentar || "Kein Kommentar"}
+        </div>
+      </div>
     </div>
   </div>
+{:else}
+  <div
+    class="card card-animated car-card"
+    class:car-card-highlight={highlight}
+    class:car-card-detail={variant === "detail"}
+    style={`--brand-color: ${brandColor}; --engine-color: ${engineColor}; --engine-glow: ${engineGlow}; animation-delay: ${delay}ms`}
+  >
+    <div class="card-accent"></div>
+    <div class="card-header">
+      {#if brandLogoUrl && !logoFailed}
+        <div class="brand-logo">
+          <img
+            src={brandLogoUrl}
+            alt={`${car.marke || "Fahrzeug"} Logo`}
+            loading="lazy"
+            onerror={() => (logoFailed = true)}
+          />
+        </div>
+      {:else}
+        <div class="brand-badge" aria-hidden="true">{brandInitials}</div>
+      {/if}
 
-  <div class="chip-row">
-    <span class={`chip chip-fuel chip-fuel-${fuelInfo.type}`}>
-      <iconify-icon icon={fuelInfo.icon} aria-hidden="true"></iconify-icon>
-      {fuelInfo.label}
-    </span>
-    <span class={`chip chip-ownership chip-ownership-${ownershipInfo.type}`}>{ownershipInfo.label}</span>
-    <span class="chip">Baujahr {car.baujahr || "-"}</span>
-    <span class="chip">{kilometerText}</span>
-    {#if isElectric}
-      <span class="chip">Batterie {batteryText}</span>
-    {/if}
-    {#if isElectric && hasWinterRange}
-      <span class="chip">Winterreichweite {winterRangeText}</span>
-    {/if}
-  </div>
+      <div class="card-titles">
+        <div class="card-title">{title || "Unbenannt"}</div>
+        <div class="card-subtitle">{car.modellvariante || "-"}</div>
+      </div>
 
-  <div class="card-content">
-    <div class="kpi-panel">
-      <div>
-        <div class="kpi-value">{formatCurrency(metrics?.tcoMonat ?? 0)}</div>
-        <div class="kpi-caption">TCO / Monat</div>
-      </div>
-      <div class="kpi-side">
-        <div class="kpi-side-label">TCO / Jahr</div>
-        <div class="kpi-side-value">{formatCurrency(metrics?.tcoJahr ?? 0)}</div>
-      </div>
+      {#if hasActions}
+        <div class="card-actions compact">
+          {#if actionConfig.edit}
+            <button
+              type="button"
+              class="icon-button"
+              onclick={(event) => {
+                event.stopPropagation();
+                onEdit && onEdit(car);
+              }}
+              aria-label="Bearbeiten"
+              title="Bearbeiten"
+            >
+              <iconify-icon icon="mdi:pencil" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+          {#if actionConfig.duplicate}
+            <button
+              type="button"
+              class="icon-button"
+              onclick={(event) => {
+                event.stopPropagation();
+                onDuplicate && onDuplicate(car);
+              }}
+              aria-label="Duplizieren"
+              title="Duplizieren"
+            >
+              <iconify-icon icon="mdi:content-copy" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+          {#if actionConfig.view}
+            <button
+              type="button"
+              class="icon-button"
+              onclick={(event) => {
+                event.stopPropagation();
+                onView && onView(car);
+              }}
+              aria-label="Detail"
+              title="Detail"
+            >
+              <iconify-icon icon="mdi:eye-outline" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+          {#if actionConfig.delete}
+            <button
+              type="button"
+              class="icon-button danger"
+              onclick={(event) => {
+                event.stopPropagation();
+                onDelete && onDelete(car);
+              }}
+              aria-label="Löschen"
+              title="Löschen"
+            >
+              <iconify-icon icon="mdi:trash-can-outline" aria-hidden="true"></iconify-icon>
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
 
-    <div class="comment-box">
-      <div class="comment-label">Notiz</div>
-      <div class="card-comment" class:muted={!car.kommentar}>
-        {car.kommentar || "Kein Kommentar"}
+    <div class="chip-row">
+      <span class={`chip chip-fuel chip-fuel-${fuelInfo.type}`}>
+        <iconify-icon icon={fuelInfo.icon} aria-hidden="true"></iconify-icon>
+        {fuelInfo.label}
+      </span>
+      <span class={`chip chip-ownership chip-ownership-${ownershipInfo.type}`}>{ownershipInfo.label}</span>
+      <span class="chip">Baujahr {car.baujahr || "-"}</span>
+      <span class="chip">{kilometerText}</span>
+      {#if isElectric}
+        <span class="chip">Batterie {batteryText}</span>
+      {/if}
+      {#if isElectric && hasWinterRange}
+        <span class="chip">Winterreichweite {winterRangeText}</span>
+      {/if}
+    </div>
+
+    <div class="card-content">
+      <div class="kpi-panel">
+        <div>
+          <div class="kpi-value">{formatCurrency(metrics?.tcoMonat ?? 0)}</div>
+          <div class="kpi-caption">TCO / Monat</div>
+        </div>
+        <div class="kpi-side">
+          <div class="kpi-side-label">TCO / Jahr</div>
+          <div class="kpi-side-value">{formatCurrency(metrics?.tcoJahr ?? 0)}</div>
+        </div>
+      </div>
+
+      <div class="comment-box">
+        <div class="comment-label">Notiz</div>
+        <div class="card-comment" class:muted={!car.kommentar}>
+          {car.kommentar || "Kein Kommentar"}
+        </div>
       </div>
     </div>
   </div>
-</div>
+{/if}

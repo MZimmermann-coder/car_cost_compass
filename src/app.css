@@ -218,19 +218,26 @@ textarea:disabled {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.04);
-  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.car-card:hover {
+.car-card.is-interactive {
+  cursor: pointer;
+}
+
+.car-card.is-interactive:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   border-color: rgba(0, 0, 0, 0.12);
 }
 
-.car-card:focus-visible {
+.car-card.is-interactive:focus-visible {
   outline: 2px solid rgba(74, 124, 111, 0.45);
   outline-offset: 2px;
+}
+
+.car-card.car-card-detail {
+  min-height: 0;
 }
 
 .card-accent {
@@ -630,6 +637,7 @@ textarea:disabled {
 .table-wrap {
   overflow-x: auto;
   border-radius: var(--radius);
+  position: relative;
 }
 
 .brand-cell {
@@ -890,6 +898,161 @@ tbody tr:nth-child(odd) {
   font-size: 1.1rem;
 }
 
+.detail-section {
+  margin-bottom: 2rem;
+}
+
+.detail-section h2 {
+  margin-bottom: 0.75rem;
+}
+
+.detail-general {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.detail-general .card + .card {
+  margin-top: 0;
+}
+
+.info-card h3 {
+  margin-bottom: 0.75rem;
+}
+
+.info-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.info-label {
+  color: var(--muted);
+}
+
+.info-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.chart-card {
+  margin-top: 1.25rem;
+}
+
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.chart-caption {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.chart-wrap {
+  overflow-x: auto;
+}
+
+.chart-shell {
+  position: relative;
+  min-height: 280px;
+}
+
+.chart-shell canvas {
+  width: 100%;
+  height: 320px;
+  display: block;
+}
+
+.chart-error {
+  padding: 1rem;
+  border-radius: 12px;
+  background: #f7f2ed;
+  color: #725c4b;
+  font-size: 0.9rem;
+}
+
+.row-highlight td {
+  background: #f7f0e8;
+}
+
+.has-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.has-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  max-width: 320px;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(26, 26, 26, 0.92);
+  color: #f8f5f0;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: pre-line;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 5;
+}
+
+.has-tooltip:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+td.has-tooltip::after {
+  left: 0.5rem;
+}
+
+.table-wrap .has-tooltip::after {
+  display: none;
+}
+
+.floating-tooltip {
+  position: fixed;
+  left: var(--tooltip-x);
+  top: var(--tooltip-y);
+  transform: translateY(calc(-100% - 10px));
+  max-width: 320px;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(26, 26, 26, 0.94);
+  color: #f8f5f0;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: pre-line;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.chart-wrap svg {
+  width: 100%;
+  min-width: 640px;
+  height: auto;
+  display: block;
+}
+
+.chart-axis {
+  font-size: 0.7rem;
+  fill: var(--muted);
+}
+
 .sidebar-backdrop {
   display: none;
   position: fixed;
@@ -961,6 +1124,10 @@ tbody tr:nth-child(odd) {
   }
 
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-general {
     grid-template-columns: 1fr;
   }
 
