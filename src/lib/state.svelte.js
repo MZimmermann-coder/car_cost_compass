@@ -69,7 +69,17 @@ export const uiState = $state({
   currentView: "garage",
   selectedCarId: null,
   fileHandle: null,
-  dirty: false
+  dirty: false,
+  garageMode: "cards",
+  garageFilters: {
+    searchTerm: "",
+    fuel: "all",
+    ownership: "all",
+    batteryMin: "",
+    batteryMax: "",
+    winterMin: "",
+    winterMax: ""
+  }
 });
 
 export function markDirty() {
@@ -81,6 +91,11 @@ export function resetDirty() {
 }
 
 export function navigateTo(view) {
+  if (view === "overview") {
+    uiState.currentView = "garage";
+    uiState.garageMode = "table";
+    return;
+  }
   uiState.currentView = view;
 }
 

@@ -5,7 +5,6 @@
 
   const items = [
     { id: "garage", label: "Garage" },
-    { id: "overview", label: "Übersicht" },
     { id: "detail", label: "Detail" },
     { id: "settings", label: "Einstellungen" }
   ];
@@ -39,5 +38,3 @@
     {/each}
   </nav>
 </aside>
-
-

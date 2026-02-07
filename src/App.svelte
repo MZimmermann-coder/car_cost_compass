@@ -2,7 +2,6 @@
   import Sidebar from "./components/Sidebar.svelte";
   import TopBar from "./components/TopBar.svelte";
   import Garage from "./views/Garage.svelte";
-  import Overview from "./views/Overview.svelte";
   import Detail from "./views/Detail.svelte";
   import Settings from "./views/Settings.svelte";
   import { uiState } from "./lib/state.svelte.js";
@@ -35,15 +34,17 @@
   });
 </script>
 
+<svelte:head>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+</svelte:head>
+
 <div class="app">
   <TopBar onToggleSidebar={toggleSidebar} />
   <div class="layout">
     <Sidebar open={sidebarOpen} onClose={closeSidebar} />
     <main class="content fade-in">
-      {#if uiState.currentView === "garage"}
+      {#if uiState.currentView === "garage" || uiState.currentView === "overview"}
         <Garage />
-      {:else if uiState.currentView === "overview"}
-        <Overview />
       {:else if uiState.currentView === "detail"}
         <Detail carId={uiState.selectedCarId} />
       {:else if uiState.currentView === "settings"}
@@ -60,4 +61,3 @@
     ></button>
   {/if}
 </div>
-

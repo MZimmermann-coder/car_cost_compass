@@ -3,10 +3,20 @@
   import { computeOverviewMetrics, computeRankings, num } from "../lib/compute.js";
   import { formatCurrency, formatNumber } from "../lib/format.js";
 
+  let {
+    embedded = false,
+    onRequestAdd,
+    cars = null,
+    isFiltered = false,
+    onClearFilters
+  } = $props();
+
   let sortKey = $state("rank");
   let sortDir = $state("asc");
 
-  const columns = [
+  const horizonYears = $derived(Math.max(0, Math.round(num(appState.settings.planungshorizont))));
+  const horizonLabel = $derived(horizonYears === 1 ? "Jahr" : "Jahren");
+  const columns = $derived.by(() => [
     { key: "marke", label: "Marke" },
     { key: "modell", label: "Modell" },
     { key: "modellvariante", label: "Modellvariante" },
@@ -19,14 +29,12 @@
     { key: "tcoMonat", label: "TCO/Monat" },
     { key: "tcoJahr", label: "TCO/Jahr" },
     { key: "tcoKm", label: "TCO/km" },
-    { key: "tcoTotal", label: "TCO nach N Jahren" },
+    { key: "tcoTotal", label: `TCO nach ${horizonYears} ${horizonLabel}` },
     { key: "rank", label: "Rang" },
     { key: "kommentar", label: "Kommentar" }
-  ];
+  ]);
 
   const highlightKeys = [
-    "kaufpreis",
-    "leasingrate",
     "batterie",
     "winterreichweite",
     "tcoMonat",
@@ -37,10 +45,12 @@
 
   const higherBetter = ["winterreichweite", "batterie"];
 
+  const carList = $derived.by(() => (Array.isArray(cars) ? cars : appState.cars));
+
   const rows = $derived.by(() => {
-    const rankingList = computeRankings(appState.cars, appState.settings);
+    const rankingList = computeRankings(carList, appState.settings);
     const rankMap = new Map(rankingList.map((item) => [item.carId, item.rank]));
-    return appState.cars.map((car) => {
+    return carList.map((car) => {
       const metrics = computeOverviewMetrics(car, appState.settings);
       return {
         car,
@@ -55,7 +65,7 @@
     for (const key of highlightKeys) {
       const values = rows
         .map((row) => getNumericValue(row, key))
-        .filter((value) => Number.isFinite(value));
+        .filter((value) => Number.isFinite(value) && value > 0);
       if (values.length) {
         result[key] = {
           min: Math.min(...values),
@@ -93,6 +103,63 @@
     sortDir = "asc";
   }
 
+  function normalizeBrand(brand) {
+    return (brand || "")
+      .trim()
+      .toLowerCase()
+      .replace(/ä/g, "ae")
+      .replace(/ö/g, "oe")
+      .replace(/ü/g, "ue")
+      .replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function getBrandSlug(brand) {
+    const normalized = normalizeBrand(brand);
+    if (!normalized) return "";
+    const map = {
+      vw: "volkswagen",
+      volkswagen: "volkswagen",
+      bmw: "bmw",
+      hyundai: "hyundai",
+      mercedes: "mercedesbenz",
+      mercedesbenz: "mercedesbenz",
+      audi: "audi",
+      tesla: "tesla",
+      skoda: "skoda",
+      seat: "seat",
+      opel: "opel",
+      ford: "ford",
+      toyota: "toyota",
+      honda: "honda",
+      nissan: "nissan",
+      renault: "renault",
+      peugeot: "peugeot",
+      kia: "kia",
+      volvo: "volvo",
+      porsche: "porsche",
+      mini: "mini",
+      mazda: "mazda",
+      fiat: "fiat",
+      citroen: "citroen",
+      jeep: "jeep",
+      jaguar: "jaguar",
+      landrover: "landrover"
+    };
+    return map[normalized] || normalized;
+  }
+
+  function getBrandInitials(brand) {
+    const text = (brand || "").trim();
+    if (!text) return "CC";
+    const parts = text.split(/\s+/);
+    if (parts.length > 1) {
+      return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+    }
+    if (text.length <= 3) return text.toUpperCase();
+    return text.slice(0, 2).toUpperCase();
+  }
+
   function getSortValue(row, key) {
     if (key === "marke") return row.car.marke;
     if (key === "modell") return row.car.modell;
@@ -126,7 +193,7 @@
 
   function getHighlightClass(key, value) {
     const range = minMaxMap[key];
-    if (!range || !Number.isFinite(value)) {
+    if (!range || !Number.isFinite(value) || value <= 0) {
       return "";
     }
 
@@ -168,20 +235,44 @@
       viewCarDetail(carId);
     }
   }
+
+  function handleEmptyAction() {
+    if (embedded && onRequestAdd) {
+      onRequestAdd();
+      return;
+    }
+    navigateTo("garage");
+  }
+
+  function handleLogoError(event) {
+    event.currentTarget?.closest?.(".brand-cell")?.classList.add("logo-failed");
+  }
 </script>
 
-<div class="section-title">
-  <div>
-    <h1>Übersicht</h1>
-    <p>Vergleiche alle Fahrzeuge auf einen Blick und sortiere nach Bedarf.</p>
+{#if !embedded}
+  <div class="section-title">
+    <div>
+      <h1>Übersicht</h1>
+      <p>Vergleiche alle Fahrzeuge auf einen Blick und sortiere nach Bedarf.</p>
+    </div>
   </div>
-</div>
+{/if}
 
 {#if rows.length === 0}
   <div class="card empty-state">
-    <h3>Keine Fahrzeuge zum Vergleichen</h3>
-    <p>Füge zuerst ein Fahrzeug hinzu, um die Übersicht zu nutzen.</p>
-    <button class="button" onclick={() => navigateTo("garage")}>Zur Garage</button>
+    {#if isFiltered}
+      <h3>Keine Treffer</h3>
+      <p>Kein Fahrzeug entspricht den aktuellen Filtern.</p>
+      {#if onClearFilters}
+        <button class="button ghost" onclick={onClearFilters}>Filter zurücksetzen</button>
+      {/if}
+    {:else}
+      <h3>Keine Fahrzeuge zum Vergleichen</h3>
+      <p>Füge zuerst ein Fahrzeug hinzu, um die Übersicht zu nutzen.</p>
+      <button class="button" onclick={handleEmptyAction}>
+        {embedded ? "Fahrzeug hinzufügen" : "Zur Garage"}
+      </button>
+    {/if}
   </div>
 {:else}
   <div class="table-wrap">
@@ -215,7 +306,25 @@
             {#each columns as column}
               {@const cellValue = getNumericValue(row, column.key)}
               <td class={getHighlightClass(column.key, cellValue)}>
-                {formatCell(row, column.key)}
+                {#if column.key === "marke"}
+                  {@const slug = getBrandSlug(row.car.marke)}
+                  {@const logoUrl = slug ? `https://cdn.simpleicons.org/${slug}/1a1a1a` : ""}
+                  <div class={`brand-cell ${logoUrl ? "" : "logo-failed"}`}>
+                    {#if logoUrl}
+                      <img
+                        class="brand-icon"
+                        src={logoUrl}
+                        alt={`${row.car.marke || "Fahrzeug"} Logo`}
+                        loading="lazy"
+                        onerror={handleLogoError}
+                      />
+                    {/if}
+                    <span class="brand-fallback">{getBrandInitials(row.car.marke)}</span>
+                    <span class="brand-text">{row.car.marke || "-"}</span>
+                  </div>
+                {:else}
+                  {formatCell(row, column.key)}
+                {/if}
               </td>
             {/each}
           </tr>
@@ -224,5 +333,3 @@
     </table>
   </div>
 {/if}
-
-

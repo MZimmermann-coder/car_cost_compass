@@ -283,21 +283,65 @@
           <label for="car-versicherung">Versicherung</label>
           <input id="car-versicherung" bind:value={draft.versicherung} inputmode="decimal" />
           <div class="hint">€/Monat</div>
+          <div class="field-help">
+            Tipp: Werte findest du bei
+            <a
+              href="https://www.autokostencheck.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Autokostencheck öffnen"
+            >
+              autokostencheck.de
+            </a>
+          </div>
         </div>
         <div class="form-field">
           <label for="car-steuer-monat">Steuer</label>
           <input id="car-steuer-monat" bind:value={draft.steuerMonat} inputmode="decimal" />
           <div class="hint">€/Monat</div>
+          <div class="field-help">
+            Tipp: Werte findest du bei
+            <a
+              href="https://www.autokostencheck.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Autokostencheck öffnen"
+            >
+              autokostencheck.de
+            </a>
+          </div>
         </div>
         <div class="form-field">
           <label for="car-wartung">Wartung</label>
           <input id="car-wartung" bind:value={draft.wartung} inputmode="decimal" />
           <div class="hint">€/Monat</div>
+          <div class="field-help">
+            Tipp: Werte findest du bei
+            <a
+              href="https://www.autokostencheck.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Autokostencheck öffnen"
+            >
+              autokostencheck.de
+            </a>
+          </div>
         </div>
         <div class="form-field">
           <label for="car-reparatur">Reparatur</label>
           <input id="car-reparatur" bind:value={draft.reparatur} inputmode="decimal" />
           <div class="hint">€/Monat</div>
+          <div class="field-help">
+            Tipp: Werte findest du bei
+            <a
+              href="https://www.autokostencheck.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Autokostencheck öffnen"
+            >
+              autokostencheck.de
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -341,6 +385,17 @@
             disabled={!isElectric}
           />
           <div class="hint">km</div>
+          <div class="field-help">
+            Hinweis: Feld "Autobahn - Winter" auf
+            <a
+              href="https://ev-database.org/de/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="EV Database öffnen"
+            >
+              ev-database.org
+            </a>
+          </div>
         </div>
         <div class="form-field">
           <label for="car-batterie">Nettobatterie</label>
