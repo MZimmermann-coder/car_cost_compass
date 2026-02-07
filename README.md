@@ -1,8 +1,8 @@
 # Car Cost Compass
 
-Single-file Svelte-App zur Gegenüberstellung von Fahrzeugkosten. Alle Daten werden direkt in der HTML-Datei gespeichert.
+Single-file Svelte app for comparing vehicle costs. All data is stored inside the HTML file itself.
 
-## Entwicklung
+## Development
 
 ```bash
 npm install
@@ -15,18 +15,44 @@ npm run dev
 npm run build
 ```
 
-Der Build erzeugt `dist/index.html`. Benenne diese Datei in `car_cost_compass.html` um, wenn du eine portable Datei brauchst.
+The build generates `dist/car_cost_compass.html` (the default `dist/index.html` from Vite is removed).
 
-**Wichtig:** Baue niemals über deine Arbeitsdatei, in der du Daten gespeichert hast. Der Build enthält immer die Standard-Daten aus `index.html`.
+By default, the build script reads the previous `dist/car_cost_compass.html` (or `dist/index.html` if present)
+and carries its `data-store` forward into the new build output. You can point it at a different source file by passing a path:
 
-## Nutzung
+```bash
+npm run build -- docs/index.html
+```
 
-- Fahrzeuge in der Garage anlegen oder bearbeiten.
-- In der Übersicht vergleichen und sortieren.
-- In der Detailansicht die jährliche Aufschlüsselung prüfen.
-- Über die obere Leiste Dateien öffnen und speichern.
+You can also pass a `data-store` JSON backup:
 
-Wenn der File System Access API nicht verfügbar ist, nutzt die App automatische Download- und Upload-Fallbacks.
+```bash
+npm run build -- backups/data-store-YYYY-MM-DDTHH-MM-SS.json
+```
+
+A backup of the carried data is written to `backups/` on each build.
+
+If you want a clean build without carrying data, run:
+
+```bash
+npm run build:clean
+```
+
+## Working With Data
+
+- Use the in-app **Open** and **Save/Save as** buttons to load and persist data.
+- If you add features and rebuild, open your existing data file in the new build and then **Save as** a new file.
+- If you want to migrate manually, copy the `<script id="data-store">...</script>` block from your old file into
+  the new build output.
+
+## Usage
+
+- Add or edit vehicles in the Garage.
+- Compare in the Overview and sort as needed.
+- Review the yearly breakdown in Detail.
+- Use the top bar for opening and saving files.
+
+If the File System Access API is unavailable, the app falls back to upload/download.
 
 
 

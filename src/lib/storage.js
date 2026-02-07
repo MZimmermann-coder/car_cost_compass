@@ -1,25 +1,39 @@
-import { appState, uiState, loadState, resetDirty } from "./state.svelte.js";
+﻿import { appState, uiState, loadState, resetDirty } from "./state.svelte.js";
 
-const dataStorePattern = /<script[^>]*id=["']data-store["'][^>]*>([\s\S]*?)<\/script>/i;
+function findDataStoreBlock(html) {
+  const pattern = /<script[^>]*id=["']data-store["'][^>]*type=["']application\/json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  let lastMatch = null;
+
+  while ((match = pattern.exec(html))) {
+    lastMatch = {
+      start: match.index,
+      end: pattern.lastIndex,
+      jsonText: match[1]
+    };
+  }
+
+  return lastMatch;
+}
 
 function extractState(html) {
-  const match = html.match(dataStorePattern);
-  if (!match) {
+  const block = findDataStoreBlock(html);
+  if (!block) {
     throw new Error("data-store script tag not found");
   }
-  const jsonText = match[1].trim();
+  const jsonText = block.jsonText.trim();
   return JSON.parse(jsonText);
 }
 
 function buildHtmlWithState(html, state) {
   const jsonText = JSON.stringify(state, null, 2);
-  if (!dataStorePattern.test(html)) {
+  const block = findDataStoreBlock(html);
+  if (!block) {
     throw new Error("data-store script tag not found");
   }
-  return html.replace(
-    dataStorePattern,
-    `<script id="data-store" type="application/json">${jsonText}</script>`
-  );
+  const safeJson = jsonText.replace(/<\/script>/gi, "<\\/script>");
+  const replacement = `<script id="data-store" type="application/json">${safeJson}</script>`;
+  return html.slice(0, block.start) + replacement + html.slice(block.end);
 }
 
 function getStateSnapshot() {
@@ -137,14 +151,22 @@ export async function saveFileAs(existingHtml) {
 
   if (window.showSaveFilePicker) {
     try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: "car_cost_compass.html",
+      const pickerOptions = {
+        suggestedName: uiState.fileHandle ? uiState.fileHandle.name : "car_cost_compass.html",
         types: [
           {
             description: "HTML",
             accept: { "text/html": [".html"] }
           }
         ]
+      };
+
+      if (uiState.fileHandle) {
+        pickerOptions.startIn = uiState.fileHandle;
+      }
+
+      const handle = await window.showSaveFilePicker({
+        ...pickerOptions
       });
 
       if (!handle) {
@@ -175,4 +197,5 @@ export async function saveFileAs(existingHtml) {
   URL.revokeObjectURL(url);
   resetDirty();
 }
+
 

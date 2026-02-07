@@ -1,3 +1,0 @@
-- change name of output file from input file to "car_cost_compass.html"
-- add option to build over existing file 
-- add fahrzeug should be full screen

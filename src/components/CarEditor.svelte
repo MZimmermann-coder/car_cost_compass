@@ -1,7 +1,8 @@
-<script>
+﻿<script>
   import { appState, createEmptyCar, markDirty } from "../lib/state.svelte.js";
+  import { num } from "../lib/compute.js";
 
-  let { car, onClose } = $props();
+  let { car, onClose, fullScreen = false } = $props();
 
   const draft = $state(createEmptyCar());
 
@@ -16,9 +17,74 @@
   const isNew = $derived(draft.neu === "Neu");
   const isElectric = $derived(draft.kraftstoffart === "Elektro");
   const consumptionUnit = $derived(isElectric ? "kWh/100km" : "L/100km");
+  const panelClass = $derived(fullScreen ? "editor-panel fullscreen" : "editor-panel");
+  const showBackdrop = $derived(!fullScreen);
+
+  const requiredFields = $derived.by(() => ({
+    baujahr: true,
+    verbrauch: true,
+    kaufpreis: isPurchase,
+    leasingrate: isLease
+  }));
+
+  let showErrors = $state(false);
+  let errors = $state({});
+
+  const fieldIds = {
+    baujahr: "car-baujahr",
+    verbrauch: "car-verbrauch",
+    kaufpreis: "car-kaufpreis",
+    leasingrate: "car-leasingrate"
+  };
+
+  function clearErrors() {
+    for (const key of Object.keys(errors)) {
+      delete errors[key];
+    }
+  }
+
+  function validateFields() {
+    clearErrors();
+    let firstId = null;
+
+    for (const [field, required] of Object.entries(requiredFields)) {
+      if (!required) {
+        continue;
+      }
+      if (!num(draft[field])) {
+        errors[field] = true;
+        if (!firstId) {
+          firstId = fieldIds[field];
+        }
+      }
+    }
+
+    showErrors = Object.keys(errors).length > 0;
+    if (showErrors && firstId) {
+      requestAnimationFrame(() => {
+        document.getElementById(firstId)?.focus();
+      });
+    }
+
+    return !showErrors;
+  }
+
+  function handleRequiredInput(field) {
+    if (!showErrors || !requiredFields[field]) {
+      return;
+    }
+    if (num(draft[field])) {
+      delete errors[field];
+      showErrors = Object.keys(errors).length > 0;
+    }
+  }
 
   function handleSave() {
-    const cleaned = structuredClone(draft);
+    if (!validateFields()) {
+      return;
+    }
+
+    const cleaned = { ...draft };
 
     if (isLease) {
       cleaned.kaufpreis = "0";
@@ -59,18 +125,23 @@
   }
 </script>
 
-<button
-  type="button"
-  class="editor-backdrop"
-  onclick={() => onClose && onClose()}
-  aria-label="Editor schließen"
-></button>
-<section class="editor-panel">
+{#if showBackdrop}
+  <button
+    type="button"
+    class="editor-backdrop"
+    onclick={() => onClose && onClose()}
+    aria-label="Editor schließen"
+  ></button>
+{/if}
+<section class={panelClass}>
   <div class="editor-header">
     <h2>{isEdit ? "Fahrzeug bearbeiten" : "Fahrzeug hinzufügen"}</h2>
     <button class="button ghost" onclick={() => onClose && onClose()}>Schließen</button>
   </div>
   <div class="editor-body">
+    {#if showErrors}
+      <div class="form-error-banner">Bitte fülle die Pflichtfelder aus.</div>
+    {/if}
     <div class="card">
       <h3>Basisdaten</h3>
       <div class="form-grid">
@@ -87,8 +158,23 @@
           <input id="car-modellvariante" bind:value={draft.modellvariante} />
         </div>
         <div class="form-field">
-          <label for="car-baujahr">Baujahr</label>
-          <input id="car-baujahr" bind:value={draft.baujahr} inputmode="numeric" placeholder="2020" />
+          <label for="car-baujahr">
+            Baujahr <span class="required-star">*</span>
+          </label>
+          <input
+            id="car-baujahr"
+            bind:value={draft.baujahr}
+            inputmode="numeric"
+            placeholder="2020"
+            required
+            class:input-error={errors.baujahr}
+            aria-invalid={errors.baujahr}
+            aria-describedby={errors.baujahr ? "error-baujahr" : undefined}
+            oninput={() => handleRequiredInput("baujahr")}
+          />
+          {#if showErrors && errors.baujahr}
+            <div class="field-error" id="error-baujahr">Pflichtfeld</div>
+          {/if}
         </div>
         <div class="form-field">
           <label for="car-kilometerstand">Kilometerstand</label>
@@ -127,9 +213,24 @@
       <h3>Kosten</h3>
       <div class="form-grid">
         <div class="form-field">
-          <label for="car-kaufpreis">Kaufpreis</label>
-          <input id="car-kaufpreis" bind:value={draft.kaufpreis} inputmode="decimal" disabled={isLease} />
+          <label for="car-kaufpreis">
+            Kaufpreis {#if isPurchase}<span class="required-star">*</span>{/if}
+          </label>
+          <input
+            id="car-kaufpreis"
+            bind:value={draft.kaufpreis}
+            inputmode="decimal"
+            disabled={isLease}
+            required={isPurchase}
+            class:input-error={errors.kaufpreis}
+            aria-invalid={errors.kaufpreis}
+            aria-describedby={errors.kaufpreis ? "error-kaufpreis" : undefined}
+            oninput={() => handleRequiredInput("kaufpreis")}
+          />
           <div class="hint">€</div>
+          {#if showErrors && errors.kaufpreis}
+            <div class="field-error" id="error-kaufpreis">Pflichtfeld</div>
+          {/if}
         </div>
         <div class="form-field">
           <label for="car-rabatt">Rabatt</label>
@@ -147,14 +248,24 @@
           <div class="hint">€</div>
         </div>
         <div class="form-field">
-          <label for="car-leasingrate">Leasingrate</label>
+          <label for="car-leasingrate">
+            Leasingrate {#if isLease}<span class="required-star">*</span>{/if}
+          </label>
           <input
             id="car-leasingrate"
             bind:value={draft.leasingrate}
             inputmode="decimal"
             disabled={isPurchase}
+            required={isLease}
+            class:input-error={errors.leasingrate}
+            aria-invalid={errors.leasingrate}
+            aria-describedby={errors.leasingrate ? "error-leasingrate" : undefined}
+            oninput={() => handleRequiredInput("leasingrate")}
           />
           <div class="hint">€/Monat</div>
+          {#if showErrors && errors.leasingrate}
+            <div class="field-error" id="error-leasingrate">Pflichtfeld</div>
+          {/if}
         </div>
         <div class="form-field">
           <label for="car-versicherungsart">Versicherungsart</label>
@@ -192,7 +303,7 @@
     </div>
 
     <div class="card">
-      <h3>E-Mobilität</h3>
+      <h3>Antrieb & Verbrauch</h3>
       <div class="form-grid">
         <div class="form-field">
           <label for="car-kraftstoffart">Kraftstoffart</label>
@@ -203,9 +314,23 @@
           </select>
         </div>
         <div class="form-field">
-          <label for="car-verbrauch">Verbrauch</label>
-          <input id="car-verbrauch" bind:value={draft.verbrauch} inputmode="decimal" />
+          <label for="car-verbrauch">
+            Verbrauch <span class="required-star">*</span>
+          </label>
+          <input
+            id="car-verbrauch"
+            bind:value={draft.verbrauch}
+            inputmode="decimal"
+            required
+            class:input-error={errors.verbrauch}
+            aria-invalid={errors.verbrauch}
+            aria-describedby={errors.verbrauch ? "error-verbrauch" : undefined}
+            oninput={() => handleRequiredInput("verbrauch")}
+          />
           <div class="hint">{consumptionUnit}</div>
+          {#if showErrors && errors.verbrauch}
+            <div class="field-error" id="error-verbrauch">Pflichtfeld</div>
+          {/if}
         </div>
         <div class="form-field">
           <label for="car-winterreichweite">Winterreichweite</label>
@@ -253,5 +378,6 @@
     <button class="button" onclick={handleSave}>Speichern</button>
   </div>
 </section>
+
 
 

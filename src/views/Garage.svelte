@@ -40,37 +40,41 @@
   }
 </script>
 
-<div class="section-title">
-  <div>
-    <h1>Garage</h1>
-    <p>Verwalte deine Fahrzeuge und starte Vergleiche.</p>
-  </div>
-  <button class="button" onclick={() => openEditor(null)}>Fahrzeug hinzufügen</button>
-</div>
-
-{#if appState.cars.length === 0}
-  <div class="card empty-state">
-    <h3>Noch keine Fahrzeuge vorhanden</h3>
-    <p>Füge dein erstes Fahrzeug hinzu, um Kosten zu vergleichen.</p>
+{#if editorOpen && !editingCar}
+  <CarEditor car={null} onClose={closeEditor} fullScreen={true} />
+{:else}
+  <div class="section-title">
+    <div>
+      <h1>Garage</h1>
+      <p>Verwalte deine Fahrzeuge und starte Vergleiche.</p>
+    </div>
     <button class="button" onclick={() => openEditor(null)}>Fahrzeug hinzufügen</button>
   </div>
-{:else}
-  <div class="grid">
-    {#each appState.cars as car, index (car.id)}
-      <CarCard
-        car={car}
-        metrics={metricsById.get(car.id)}
-        onEdit={openEditor}
-        onDuplicate={handleDuplicate}
-        onDelete={handleDelete}
-        onView={(target) => viewCarDetail(target.id)}
-        delay={index * 60}
-      />
-    {/each}
-  </div>
+
+  {#if appState.cars.length === 0}
+    <div class="card empty-state">
+      <h3>Noch keine Fahrzeuge vorhanden</h3>
+      <p>Füge dein erstes Fahrzeug hinzu, um Kosten zu vergleichen.</p>
+      <button class="button" onclick={() => openEditor(null)}>Fahrzeug hinzufügen</button>
+    </div>
+  {:else}
+    <div class="grid">
+      {#each appState.cars as car, index (car.id)}
+        <CarCard
+          car={car}
+          metrics={metricsById.get(car.id)}
+          onEdit={openEditor}
+          onDuplicate={handleDuplicate}
+          onDelete={handleDelete}
+          onView={(target) => viewCarDetail(target.id)}
+          delay={index * 60}
+        />
+      {/each}
+    </div>
+  {/if}
 {/if}
 
-{#if editorOpen}
+{#if editorOpen && editingCar}
   <CarEditor car={editingCar} onClose={closeEditor} />
 {/if}
 
