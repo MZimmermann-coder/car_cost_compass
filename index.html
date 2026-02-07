@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Cost Compass</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script id="data-store" type="application/json">{
+  "version": 1,
+  "settings": {
+    "kmPerYear": 10000,
+    "benzinpreis": 1.85,
+    "dieselpreis": 1.75,
+    "strompreis": 0.35,
+    "opportunitaet": 4,
+    "kostensteigerung": 3,
+    "planungshorizont": 5,
+    "depr": {
+      "age1": 30,
+      "age2_3": 15,
+      "age4_5": 10,
+      "age6_8": 7,
+      "age9_12": 5,
+      "age13p": 4
+    }
+  },
+  "cars": []
+}</script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+

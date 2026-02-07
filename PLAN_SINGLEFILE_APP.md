@@ -1,4 +1,4 @@
-# Car Cost Compass: Build Plan (Vite + Svelte 5 + Singlefile)
+﻿# Car Cost Compass: Build Plan (Vite + Svelte 5 + Singlefile)
 
 This plan is written for a new, separate project. It assumes no prior knowledge.
 
@@ -23,7 +23,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   because they map 1:1 to the German UI labels and the stored JSON schema.
 - **Number formatting**: All displayed numbers use **German locale** (`de-DE`).
   Use `Intl.NumberFormat('de-DE', ...)` for output formatting.
-  Examples: `1.234,56 €`, `12.500 km`, `3,5 %`.
+  Examples: `1.234,56 Ã¢â€šÂ¬`, `12.500 km`, `3,5 %`.
   Input parsing must accept both comma and dot as decimal separators.
 
 ## UI/UX Concept
@@ -41,7 +41,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
 
 ## Step-by-Step Implementation Plan (with checkboxes)
 
-- [ ] Step 1: Create project with Vite + Svelte.
+- [x] Step 1: Create project with Vite + Svelte.
   - `npm create vite@latest car_cost_compass -- --template svelte`
   - `cd car_cost_compass`
   - `npm install`
@@ -49,40 +49,40 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   - Verify that `@sveltejs/vite-plugin-svelte` is already in `devDependencies`
     (the svelte template includes it automatically).
   - Delete the template boilerplate files (`src/assets/`, `src/lib/Counter.svelte`,
-    default `src/App.svelte` contents, `src/app.css`) — they will be replaced.
+    default `src/App.svelte` contents, `src/app.css`) Ã¢â‚¬â€ they will be replaced.
 
-- [ ] Step 2: Project structure.
+- [x] Step 2: Project structure.
   ```
   car_cost_compass/
-  ├── index.html                  # app shell + embedded JSON data-store
-  ├── vite.config.js              # Vite config with svelte + singlefile plugins
-  ├── package.json
-  ├── src/
-  │   ├── main.js                 # mount App.svelte to #app
-  │   ├── App.svelte              # layout shell (sidebar + topbar + view router)
-  │   ├── app.css                 # global styles (palette, typography, resets)
-  │   ├── lib/
-  │   │   ├── state.svelte.js     # reactive state with Svelte 5 runes ($state)
-  │   │   ├── compute.js          # pure cost calculation logic (no Svelte imports)
-  │   │   └── storage.js          # File System Access API open/save logic
-  │   ├── views/
-  │   │   ├── Garage.svelte       # car card list with KPIs
-  │   │   ├── Overview.svelte     # comparison table with ranking
-  │   │   ├── Detail.svelte       # per-car 10-year cost breakdown
-  │   │   └── Settings.svelte     # grouped settings cards
-  │   └── components/
-  │       ├── Sidebar.svelte      # left navigation between views
-  │       ├── TopBar.svelte       # open/save buttons + file status indicator
-  │       ├── CarCard.svelte      # individual car card (used in Garage)
-  │       ├── CarEditor.svelte    # slide-over panel for add/edit car
-  │       └── CostTable.svelte    # reusable 10-year breakdown table (used in Detail)
+  Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ index.html                  # app shell + embedded JSON data-store
+  Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ vite.config.js              # Vite config with svelte + singlefile plugins
+  Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ package.json
+  Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ src/
+  Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ main.js                 # mount App.svelte to #app
+  Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ App.svelte              # layout shell (sidebar + topbar + view router)
+  Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ app.css                 # global styles (palette, typography, resets)
+  Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ lib/
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ state.svelte.js     # reactive state with Svelte 5 runes ($state)
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ compute.js          # pure cost calculation logic (no Svelte imports)
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ storage.js          # File System Access API open/save logic
+  Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ views/
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ Garage.svelte       # car card list with KPIs
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ Overview.svelte     # comparison table with ranking
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ Detail.svelte       # per-car 10-year cost breakdown
+  Ã¢â€â€š   Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ Settings.svelte     # grouped settings cards
+  Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ components/
+  Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ Sidebar.svelte      # left navigation between views
+  Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ TopBar.svelte       # open/save buttons + file status indicator
+  Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ CarCard.svelte      # individual car card (used in Garage)
+  Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ CarEditor.svelte    # slide-over panel for add/edit car
+  Ã¢â€â€š       Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ CostTable.svelte    # reusable 10-year breakdown table (used in Detail)
   ```
   Notes on Svelte 5 file naming:
   - Files containing runes (`$state`, `$derived`, `$effect`) at the module top level
     must use the `.svelte.js` extension (e.g., `state.svelte.js`).
   - Pure logic files without runes use plain `.js` (e.g., `compute.js`, `storage.js`).
 
-- [ ] Step 3: Add `data-store` to `index.html`.
+- [x] Step 3: Add `data-store` to `index.html`.
   - Inside `index.html`, add before the `<script type="module" src="/src/main.js">`:
     ```html
     <script id="data-store" type="application/json">{
@@ -93,7 +93,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
     ```
   - This JSON block is read on app init and updated on save.
 
-- [ ] Step 4: Define data model and defaults (explicit fields).
+- [x] Step 4: Define data model and defaults (explicit fields).
   - `Car` fields (all strings in storage; convert to numbers for math):
     - `id` (auto-generated UUID string for keying)
     - `marke`, `modell`, `modellvariante`, `baujahr`
@@ -139,7 +139,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
     - Export `normalizeState(raw)` to fill missing fields with defaults
       (handles opening files saved with older versions).
 
-- [ ] Step 5: Implement calculation logic (match the rules defined here).
+- [x] Step 5: Implement calculation logic (match the rules defined here).
   - This is a **pure JS module** (`compute.js`) with no Svelte imports.
   - All functions take plain objects (car, settings) as arguments and return results.
   - Parse numbers with comma or dot (e.g., `"15,2"` => `15.2`). Export a `num(val)` helper.
@@ -172,11 +172,11 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
     - TCO/Jahr = TCO / hz
     - TCO/km = TCO / (kmPerYear * hz)
   - Export functions:
-    - `computeYearlyBreakdown(car, settings)` → array of `planungshorizont` yearly row objects.
-    - `computeOverviewMetrics(car, settings)` → `{ tcoMonat, tcoJahr, tcoKm, tcoTotal, restwert }`.
-    - `computeRankings(cars, settings)` → array of `{ carId, rank }`.
+    - `computeYearlyBreakdown(car, settings)` Ã¢â€ â€™ array of `planungshorizont` yearly row objects.
+    - `computeOverviewMetrics(car, settings)` Ã¢â€ â€™ `{ tcoMonat, tcoJahr, tcoKm, tcoTotal, restwert }`.
+    - `computeRankings(cars, settings)` Ã¢â€ â€™ array of `{ carId, rank }`.
 
-- [ ] Step 6: Implement Svelte views.
+- [x] Step 6: Implement Svelte views.
   - **Garage** (`Garage.svelte`):
     - Import `appState` from `state.svelte.js`.
     - Use `{#each appState.cars as car (car.id)}` to render `<CarCard>` components.
@@ -184,11 +184,11 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
       KPIs (TCO/Monat, TCO/Jahr) computed via `$derived`.
     - Quick actions on each card: Edit (opens CarEditor),
       Duplicate (copies all fields into a new car with a new id),
-      Delete (shows a confirmation dialog: "Fahrzeug wirklich löschen?" with Ja/Abbrechen),
+      Delete (shows a confirmation dialog: "Fahrzeug wirklich lÃ¶schen?" with Ja/Abbrechen),
       View Detail (navigates to Detail view for this car).
     - "Add car" button opens CarEditor with a blank template.
     - Empty state: if `appState.cars` is empty, show a centered placeholder message
-      (e.g., "Noch keine Fahrzeuge vorhanden") with a prominent "Fahrzeug hinzufügen" button.
+      (e.g., "Noch keine Fahrzeuge vorhanden") with a prominent "Fahrzeug hinzufÃ¼gen" button.
   - **Overview** (`Overview.svelte`):
     - Render an HTML `<table>` with columns (left to right):
       Marke, Modell, Modellvariante, Baujahr, Beschaffungsart,
@@ -204,7 +204,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
       (arrow) on the active column header. Default sort: by Rang ascending.
     - Click on a row navigates to the Detail view for that car.
     - Empty state: if no cars exist, show a placeholder message
-      (e.g., "Keine Fahrzeuge zum Vergleichen. Füge zuerst ein Fahrzeug hinzu.")
+      (e.g., "Keine Fahrzeuge zum Vergleichen. FÃ¼ge zuerst ein Fahrzeug hinzu.")
       with a link/button to navigate to Garage.
   - **Detail** (`Detail.svelte`):
     - Accept a `carId` prop: `let { carId } = $props();`
@@ -218,10 +218,10 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   - **Settings** (`Settings.svelte`):
     - Bind inputs directly to `appState.settings` fields using `bind:value`.
     - Group into cards: Kraftstoffpreise, Kostenparameter, Planungshorizont, Wertverlust.
-    - Each input shows a label, the field, and a unit hint (e.g., "€/L", "%", "Jahre").
+    - Each input shows a label, the field, and a unit hint (e.g., "Ã¢â€šÂ¬/L", "%", "Jahre").
     - Depreciation is shown as a sub-card with one row per age bracket.
 
-- [ ] Step 7: Implement add/edit car workflow (`CarEditor.svelte`).
+- [x] Step 7: Implement add/edit car workflow (`CarEditor.svelte`).
   - Slide-over panel (slides in from the right, overlays content).
   - Accept props: `let { car, onClose } = $props();`
     - If `car` is null, create a new car from the default template.
@@ -247,7 +247,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   - Save button: push new car to `appState.cars` or update existing; set `dirty = true`; close panel.
   - Cancel button: discard changes; close panel.
 
-- [ ] Step 8: Implement file open/save (`storage.js`).
+- [x] Step 8: Implement file open/save (`storage.js`).
   - **Open**:
     - Use `window.showOpenFilePicker` to get a file handle.
     - Read the file as text.
@@ -276,9 +276,9 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   - **TopBar** integration:
     - Display the file name from `fileHandle` (or "Unbenannt" if null).
     - Show a dirty indicator (e.g., dot or asterisk) when `dirty` is true.
-    - Buttons: Öffnen, Speichern, Speichern unter.
+    - Buttons: Ã–ffnen, Speichern, Speichern unter.
 
-- [ ] Step 9: Routing.
+- [x] Step 9: Routing.
   - Use a simple reactive variable approach (no router library).
   - `currentView` rune in `state.svelte.js` holds one of: `'garage'`, `'overview'`, `'detail'`, `'settings'`.
   - `selectedCarId` rune for the Detail view target.
@@ -297,10 +297,10 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   - `Sidebar.svelte` sets `currentView` on click.
     The active view gets a visual highlight (accent background or left border indicator).
   - Navigation helpers exported from `state.svelte.js`:
-    - `navigateTo(view)` — sets `currentView`.
-    - `viewCarDetail(carId)` — sets `selectedCarId` and `currentView = 'detail'`.
+    - `navigateTo(view)` Ã¢â‚¬â€ sets `currentView`.
+    - `viewCarDetail(carId)` Ã¢â‚¬â€ sets `selectedCarId` and `currentView = 'detail'`.
 
-- [ ] Step 10: Global styles (`app.css`).
+- [x] Step 10: Global styles (`app.css`).
   - Warm neutral palette: background `#f5f3f0`, cards `#ffffff`,
     text `#2d2a26`, muted text `#8a8580`.
   - Single accent color: `#4a7c6f` (muted teal).
@@ -321,7 +321,7 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
     - Slide-over panel (CarEditor): full-width instead of 400px.
     - Settings cards: single column stack.
 
-- [ ] Step 11: Configure build to a single HTML file.
+- [x] Step 11: Configure build to a single HTML file.
   - `vite.config.js`:
     ```js
     import { defineConfig } from "vite";
@@ -348,9 +348,9 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   - Verify dirty indicator appears on changes and clears on save.
   - Verify empty state (no cars) shows a prompt instead of blank screen.
 
-- [ ] Step 13: Documentation.
+- [x] Step 13: Documentation.
   - `README.md`: dev setup (`npm install`, `npm run dev`), build (`npm run build`), usage notes.
-  - Explain: "Do not build over your working file — the build output resets data to defaults."
+  - Explain: "Do not build over your working file Ã¢â‚¬â€ the build output resets data to defaults."
 
 ## Critical Review (Risks / Gaps / Decisions)
 
@@ -376,3 +376,6 @@ Toolchain: Vite + `@sveltejs/vite-plugin-svelte` + `vite-plugin-singlefile`, Sve
   `src/lib/storage.js`, `src/views/*.svelte`, `src/components/*.svelte`, and `README.md`.
 - Build output: `dist/index.html` renamed to `car_cost_compass.html` (optional to commit,
   but the build steps must produce it).
+
+
+
