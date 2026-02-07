@@ -7,7 +7,7 @@
   const draft = $state(createEmptyCar());
 
   $effect(() => {
-    const base = car ? structuredClone(car) : createEmptyCar();
+    const base = car ? { ...car } : createEmptyCar();
     Object.assign(draft, base);
   });
 

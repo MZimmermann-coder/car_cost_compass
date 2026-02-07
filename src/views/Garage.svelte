@@ -26,7 +26,7 @@
   }
 
   function handleDuplicate(car) {
-    const copy = structuredClone(car);
+    const copy = { ...car };
     copy.id = createEmptyCar().id;
     appState.cars = [...appState.cars, copy];
     markDirty();
@@ -40,8 +40,8 @@
   }
 </script>
 
-{#if editorOpen && !editingCar}
-  <CarEditor car={null} onClose={closeEditor} fullScreen={true} />
+{#if editorOpen}
+  <CarEditor car={editingCar} onClose={closeEditor} fullScreen={true} />
 {:else}
   <div class="section-title">
     <div>
@@ -73,9 +73,3 @@
     </div>
   {/if}
 {/if}
-
-{#if editorOpen && editingCar}
-  <CarEditor car={editingCar} onClose={closeEditor} />
-{/if}
-
-

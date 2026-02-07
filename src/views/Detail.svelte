@@ -14,7 +14,7 @@
 {#if !car}
   <div class="card empty-state">
     <h3>Fahrzeug nicht gefunden</h3>
-    <p>Das Fahrzeug existiert nicht mehr. Kehre zur Garage zur�ck.</p>
+    <p>Das Fahrzeug existiert nicht mehr. Kehre zur Garage zurück.</p>
     <button class="button" onclick={() => navigateTo("garage")}>Zur Garage</button>
   </div>
 {:else}
@@ -41,6 +41,10 @@
   </div>
 
   <CostTable rows={breakdown} />
+  {#if car.kommentar}
+    <div class="card">
+      <h3>Kommentar</h3>
+      <div class="comment-text">{car.kommentar}</div>
+    </div>
+  {/if}
 {/if}
-
-

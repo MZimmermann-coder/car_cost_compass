@@ -4,7 +4,7 @@
 
   let { onToggleSidebar } = $props();
 
-  const fileName = $derived(uiState.fileHandle ? uiState.fileHandle.name : "Unbenannt");
+  const headerTitle = "Car Cost Compass";
 </script>
 
 <header class="topbar">
@@ -16,7 +16,7 @@
     </button>
     <div>
       <div class="file-info">
-        <span>{fileName}</span>
+        <span>{headerTitle}</span>
         {#if uiState.dirty}
           <span class="dirty-indicator"></span>
         {/if}
@@ -30,5 +30,3 @@
     <button class="button ghost" onclick={() => saveFileAs()}>Speichern unter</button>
   </div>
 </header>
-
-
