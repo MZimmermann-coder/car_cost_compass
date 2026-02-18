@@ -1,0 +1,2 @@
+- show the rabatt also in the details page under finances
+- make it more clear that the rabatt is already included in the price
