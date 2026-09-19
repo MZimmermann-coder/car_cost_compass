@@ -5,6 +5,7 @@
 
   const items = [
     { id: "garage", label: "Garage" },
+    { id: "comparison", label: "Vergleich" },
     { id: "detail", label: "Detail" },
     { id: "settings", label: "Einstellungen" }
   ];

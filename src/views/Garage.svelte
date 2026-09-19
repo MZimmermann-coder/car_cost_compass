@@ -4,6 +4,8 @@
     appState,
     createEmptyCar,
     markDirty,
+    navigateTo,
+    removeComparisonCar,
     setIncludeDepreciation,
     setGarageMode,
     uiState,
@@ -147,6 +149,7 @@
   function handleDelete(car) {
     if (window.confirm("Fahrzeug wirklich löschen?")) {
       appState.cars = appState.cars.filter((item) => item.id !== car.id);
+      removeComparisonCar(car.id);
       markDirty();
     }
   }
@@ -273,6 +276,7 @@
         />
         <span>Fahrzeugwert (Wertverlust, Rabatt, BAFA) im TCO</span>
       </label>
+      <button class="button ghost" onclick={() => navigateTo("comparison")}>Vergleichen</button>
       <button class="button" onclick={() => openEditor(null)}>Fahrzeug hinzufügen</button>
     </div>
   </div>

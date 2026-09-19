@@ -2,6 +2,7 @@
   import Sidebar from "./components/Sidebar.svelte";
   import TopBar from "./components/TopBar.svelte";
   import Garage from "./views/Garage.svelte";
+  import Compare from "./views/Compare.svelte";
   import Detail from "./views/Detail.svelte";
   import Settings from "./views/Settings.svelte";
   import { uiState } from "./lib/state.svelte.js";
@@ -45,6 +46,8 @@
     <main class="content fade-in">
       {#if uiState.currentView === "garage" || uiState.currentView === "overview"}
         <Garage />
+      {:else if uiState.currentView === "comparison"}
+        <Compare />
       {:else if uiState.currentView === "detail"}
         <Detail carId={uiState.selectedCarId} />
       {:else if uiState.currentView === "settings"}

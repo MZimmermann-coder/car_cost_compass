@@ -74,6 +74,7 @@ export const uiState = $state({
   dirty: false,
   garageMode: "cards",
   includeDepreciation: true,
+  comparisonCarIds: [],
   garageFilters: {
     searchTerm: "",
     fuel: "all",
@@ -86,8 +87,9 @@ export const uiState = $state({
 });
 
 const uiStorageKey = "car-cost-compass-ui-state";
-const validViews = new Set(["garage", "settings", "detail"]);
+const validViews = new Set(["garage", "settings", "detail", "comparison"]);
 const validGarageModes = new Set(["cards", "table"]);
+const maxComparisonCars = 4;
 
 function persistUiState() {
   if (typeof localStorage === "undefined") {
@@ -101,7 +103,8 @@ function persistUiState() {
         view: uiState.currentView,
         carId: uiState.selectedCarId,
         garageMode: uiState.garageMode,
-        includeDepreciation: uiState.includeDepreciation
+        includeDepreciation: uiState.includeDepreciation,
+        comparisonCarIds: uiState.comparisonCarIds
       })
     );
   } catch (error) {
@@ -132,6 +135,9 @@ function restoreUiState() {
     }
     if (typeof stored.includeDepreciation === "boolean") {
       uiState.includeDepreciation = stored.includeDepreciation;
+    }
+    if (Array.isArray(stored.comparisonCarIds)) {
+      uiState.comparisonCarIds = [...new Set(stored.comparisonCarIds)].slice(0, maxComparisonCars);
     }
 
     if (
@@ -165,6 +171,20 @@ export function navigateTo(view) {
   uiState.currentView = view;
   persistUiState();
   pushHistory(view);
+}
+
+export function setComparisonCarIds(carIds) {
+  const ids = Array.isArray(carIds) ? carIds : [];
+  uiState.comparisonCarIds = [...new Set(ids.filter(Boolean))].slice(0, maxComparisonCars);
+  persistUiState();
+}
+
+export function addComparisonCar(carId) {
+  setComparisonCarIds([...uiState.comparisonCarIds, carId]);
+}
+
+export function removeComparisonCar(carId) {
+  setComparisonCarIds(uiState.comparisonCarIds.filter((id) => id !== carId));
 }
 
 export function viewCarDetail(carId) {
@@ -224,6 +244,8 @@ export function loadState(newState) {
   appState.version = normalized.version;
   appState.settings = normalized.settings;
   appState.cars = normalized.cars;
+  const validCarIds = new Set(normalized.cars.map((car) => car.id));
+  uiState.comparisonCarIds = uiState.comparisonCarIds.filter((id) => validCarIds.has(id));
   uiState.dirty = false;
 }
 
@@ -259,6 +281,9 @@ function applyHistoryState(state) {
   if (state.garageMode) {
     uiState.garageMode = state.garageMode;
   }
+  if (Array.isArray(state.comparisonCarIds)) {
+    uiState.comparisonCarIds = [...new Set(state.comparisonCarIds)].slice(0, maxComparisonCars);
+  }
   if (uiState.currentView === "detail" && !uiState.selectedCarId) {
     uiState.currentView = "garage";
   }
@@ -273,7 +298,8 @@ function pushHistory(view, carId = null) {
     view,
     carId,
     garageMode: uiState.garageMode,
-    includeDepreciation: uiState.includeDepreciation
+    includeDepreciation: uiState.includeDepreciation,
+    comparisonCarIds: [...uiState.comparisonCarIds]
   };
   history.pushState(state, "", "");
 }
@@ -285,7 +311,8 @@ function initHistory() {
   const initialState = {
     view: uiState.currentView,
     carId: uiState.selectedCarId,
-    garageMode: uiState.garageMode
+    garageMode: uiState.garageMode,
+    comparisonCarIds: [...uiState.comparisonCarIds]
   };
   history.replaceState(initialState, "", "");
   window.addEventListener("popstate", (event) => {
