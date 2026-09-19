@@ -1005,6 +1005,28 @@ tbody tr:nth-child(odd) {
   font-weight: 600;
 }
 
+.comparison-yearly {
+  margin-bottom: 1.25rem;
+}
+
+.comparison-yearly-car {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #eeeae6;
+}
+
+.comparison-yearly-car-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.comparison-yearly-car-header h3 {
+  margin-bottom: 0.15rem;
+}
+
 .table-sort {
   display: flex;
   align-items: center;
@@ -1439,7 +1461,8 @@ td.has-tooltip::after {
   }
 
   .comparison-selection-header,
-  .comparison-results-header {
+  .comparison-results-header,
+  .comparison-yearly-car-header {
     align-items: flex-start;
     flex-direction: column;
   }

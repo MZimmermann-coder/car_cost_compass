@@ -11,10 +11,12 @@
   } from "../lib/state.svelte.js";
   import {
     computeOverviewMetrics,
+    computeYearlyBreakdown,
     getEffectivePurchasePrice,
     num
   } from "../lib/compute.js";
   import { formatCurrency, formatNumber } from "../lib/format.js";
+  import CostTable from "../components/CostTable.svelte";
 
   const maxComparisonCars = 4;
 
@@ -34,6 +36,18 @@
       result.set(
         car.id,
         computeOverviewMetrics(car, appState.settings, {
+          includeDepreciation: uiState.includeDepreciation
+        })
+      );
+    }
+    return result;
+  });
+  const yearlyRowsById = $derived.by(() => {
+    const result = new Map();
+    for (const car of selectedCars) {
+      result.set(
+        car.id,
+        computeYearlyBreakdown(car, appState.settings, {
           includeDepreciation: uiState.includeDepreciation
         })
       );
@@ -305,6 +319,34 @@
           </tbody>
         </table>
       </div>
+    </section>
+
+    <section class="card comparison-yearly">
+      <div class="comparison-results-header">
+        <div>
+          <h2>Jahresverlauf</h2>
+          <p class="settings-caption">Die jährliche Kostenliste entspricht der Detailanalyse jedes Fahrzeugs.</p>
+        </div>
+      </div>
+      {#each selectedCars as car (car.id)}
+        <div class="comparison-yearly-car">
+          <div class="comparison-yearly-car-header">
+            <div>
+              <h3>{getCarName(car)}</h3>
+              <span class="hint">{getCarSubtitle(car)}</span>
+            </div>
+            <button class="button ghost" type="button" onclick={() => viewCarDetail(car.id)}>
+              Detailanalyse öffnen
+            </button>
+          </div>
+          <CostTable
+            rows={yearlyRowsById.get(car.id) ?? []}
+            car={car}
+            settings={appState.settings}
+            includeDepreciation={uiState.includeDepreciation}
+          />
+        </div>
+      {/each}
     </section>
   {:else}
     <div class="card empty-state comparison-empty-state">
