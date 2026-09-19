@@ -1,6 +1,14 @@
 <script>
   import { onMount, tick } from "svelte";
-  import { appState, createEmptyCar, markDirty, uiState, viewCarDetail } from "../lib/state.svelte.js";
+  import {
+    appState,
+    createEmptyCar,
+    markDirty,
+    setIncludeDepreciation,
+    setGarageMode,
+    uiState,
+    viewCarDetail
+  } from "../lib/state.svelte.js";
   import { computeOverviewMetrics, num } from "../lib/compute.js";
   import CarCard from "../components/CarCard.svelte";
   import CarEditor from "../components/CarEditor.svelte";
@@ -21,7 +29,12 @@
   const metricsById = $derived.by(() => {
     const map = new Map();
     for (const car of appState.cars) {
-      map.set(car.id, computeOverviewMetrics(car, appState.settings));
+      map.set(
+        car.id,
+        computeOverviewMetrics(car, appState.settings, {
+          includeDepreciation: uiState.includeDepreciation
+        })
+      );
     }
     return map;
   });
@@ -139,7 +152,11 @@
   }
 
   function setViewMode(mode) {
-    uiState.garageMode = mode;
+    setGarageMode(mode);
+  }
+
+  function setDepreciationMode(value) {
+    setIncludeDepreciation(value);
   }
 
   function clearFilters() {
@@ -248,6 +265,14 @@
           Tabelle
         </button>
       </div>
+      <label class="calculation-toggle">
+        <input
+          type="checkbox"
+          checked={uiState.includeDepreciation}
+          onchange={(event) => setDepreciationMode(event.currentTarget.checked)}
+        />
+        <span>Fahrzeugwert (Wertverlust, Rabatt, BAFA) im TCO</span>
+      </label>
       <button class="button" onclick={() => openEditor(null)}>Fahrzeug hinzufügen</button>
     </div>
   </div>

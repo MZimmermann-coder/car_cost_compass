@@ -454,6 +454,32 @@ textarea:disabled {
   font-weight: 600;
 }
 
+.card-cost-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: #fbfaf8;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.card-cost-item {
+  min-width: 0;
+}
+
+.card-cost-value {
+  font-weight: 600;
+}
+
+.card-cost-meta {
+  color: var(--muted);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .comment-box {
   padding-top: 0.65rem;
   border-top: 1px dashed rgba(0, 0, 0, 0.12);
@@ -494,6 +520,7 @@ textarea:disabled {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .icon-button svg {
@@ -664,6 +691,28 @@ textarea:disabled {
   border-radius: 999px;
   padding: 0.2rem;
   border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.calculation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.calculation-toggle input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 .toggle-button {
@@ -887,6 +936,10 @@ tbody tr:nth-child(odd) {
   margin-bottom: 0.25rem;
 }
 
+.form-field-wide {
+  grid-column: 1 / -1;
+}
+
 .required-star {
   color: var(--danger);
 }
@@ -935,6 +988,24 @@ tbody tr:nth-child(odd) {
 
 .field-help a:hover {
   text-decoration: underline;
+}
+
+.table-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--accent-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.table-link:hover {
+  text-decoration: underline;
+}
+
+.table-link iconify-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .summary-strip {

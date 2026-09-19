@@ -89,6 +89,7 @@
     if (isLease) {
       cleaned.kaufpreis = "0";
       cleaned.rabatt = "0";
+      cleaned.bafaFoerderung = "0";
       cleaned.steuerMehr = "0";
     }
 
@@ -98,6 +99,7 @@
 
     if (!isNew) {
       cleaned.rabatt = "0";
+      cleaned.bafaFoerderung = "0";
       cleaned.steuerMehr = "0";
     }
 
@@ -157,6 +159,17 @@
           <label for="car-modellvariante">Modellvariante</label>
           <input id="car-modellvariante" bind:value={draft.modellvariante} />
         </div>
+        <div class="form-field form-field-wide">
+          <label for="car-konfigurationslink">Konfigurationslink</label>
+          <input
+            id="car-konfigurationslink"
+            type="url"
+            bind:value={draft.konfigurationslink}
+            placeholder="https://..."
+            autocomplete="url"
+          />
+          <div class="hint">Link zum Hersteller- oder Händler-Konfigurator</div>
+        </div>
         <div class="form-field">
           <label for="car-baujahr">
             Baujahr <span class="required-star">*</span>
@@ -214,7 +227,7 @@
       <div class="form-grid">
         <div class="form-field">
           <label for="car-kaufpreis">
-            Kaufpreis {#if isPurchase}<span class="required-star">*</span>{/if}
+            Listenpreis {#if isPurchase}<span class="required-star">*</span>{/if}
           </label>
           <input
             id="car-kaufpreis"
@@ -236,6 +249,16 @@
           <label for="car-rabatt">Rabatt</label>
           <input id="car-rabatt" bind:value={draft.rabatt} inputmode="decimal" disabled={isLease || !isNew} />
           <div class="hint">€</div>
+        </div>
+        <div class="form-field">
+          <label for="car-bafa-foerderung">BAFA Förderung</label>
+          <input
+            id="car-bafa-foerderung"
+            bind:value={draft.bafaFoerderung}
+            inputmode="decimal"
+            disabled={isLease || !isNew}
+          />
+          <div class="hint">€ (einmalig)</div>
         </div>
         <div class="form-field">
           <label for="car-steuer-mehr">Steuerliche Mehrbelastung</label>
@@ -403,7 +426,7 @@
           <div class="hint">kWh</div>
         </div>
         <div class="form-field">
-          <label for="car-ladeleistung">Ladeleistung</label>
+          <label for="car-ladeleistung">Ladeleistung 10-80% DC</label>
           <input
             id="car-ladeleistung"
             bind:value={draft.ladeleistung}

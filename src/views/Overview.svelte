@@ -1,6 +1,11 @@
 <script>
-  import { appState, navigateTo, viewCarDetail } from "../lib/state.svelte.js";
-  import { computeOverviewMetrics, computeRankings, num } from "../lib/compute.js";
+  import { appState, navigateTo, uiState, viewCarDetail } from "../lib/state.svelte.js";
+  import {
+    computeOverviewMetrics,
+    computeRankings,
+    getEffectivePurchasePrice,
+    num
+  } from "../lib/compute.js";
   import { formatCurrency, formatNumber } from "../lib/format.js";
 
   let {
@@ -22,16 +27,25 @@
     { key: "modellvariante", label: "Modellvariante" },
     { key: "baujahr", label: "Baujahr" },
     { key: "beschaffungsart", label: "Beschaffungsart" },
-    { key: "kaufpreis", label: "Kaufpreis" },
+    { key: "kaufpreis", label: "Listenpreis" },
+    { key: "rabatt", label: "Rabatt" },
+    { key: "bafaFoerderung", label: "BAFA Förderung" },
+    { key: "effektiverKaufpreis", label: "Kaufpreis nach Rabatt & BAFA" },
     { key: "leasingrate", label: "Leasingrate" },
+    { key: "versicherung", label: "Versicherung / Monat" },
+    { key: "versicherungsart", label: "Versicherungsart" },
+    { key: "wartung", label: "Wartung / Monat" },
+    { key: "reparatur", label: "Reparatur / Monat" },
     { key: "batterie", label: "Nettobatterie" },
     { key: "winterreichweite", label: "Winterreichweite" },
+    { key: "wertverlust", label: "Wertverlust" },
     { key: "tcoMonat", label: "TCO/Monat" },
     { key: "tcoJahr", label: "TCO/Jahr" },
     { key: "tcoKm", label: "TCO/km" },
     { key: "tcoTotal", label: `TCO nach ${horizonYears} ${horizonLabel}` },
     { key: "rank", label: "Rang" },
-    { key: "kommentar", label: "Kommentar" }
+    { key: "kommentar", label: "Kommentar" },
+    { key: "konfigurationslink", label: "Konfiguration" }
   ]);
 
   const highlightKeys = [
@@ -48,10 +62,14 @@
   const carList = $derived.by(() => (Array.isArray(cars) ? cars : appState.cars));
 
   const rows = $derived.by(() => {
-    const rankingList = computeRankings(carList, appState.settings);
+    const rankingList = computeRankings(carList, appState.settings, {
+      includeDepreciation: uiState.includeDepreciation
+    });
     const rankMap = new Map(rankingList.map((item) => [item.carId, item.rank]));
     return carList.map((car) => {
-      const metrics = computeOverviewMetrics(car, appState.settings);
+      const metrics = computeOverviewMetrics(car, appState.settings, {
+        includeDepreciation: uiState.includeDepreciation
+      });
       return {
         car,
         metrics,
@@ -167,23 +185,39 @@
     if (key === "baujahr") return num(row.car.baujahr);
     if (key === "beschaffungsart") return row.car.beschaffungsart;
     if (key === "kaufpreis") return num(row.car.kaufpreis);
+    if (key === "rabatt") return num(row.car.rabatt);
+    if (key === "bafaFoerderung") return num(row.car.bafaFoerderung);
+    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car);
     if (key === "leasingrate") return num(row.car.leasingrate);
+    if (key === "versicherung") return num(row.car.versicherung);
+    if (key === "versicherungsart") return row.car.versicherungsart;
+    if (key === "wartung") return num(row.car.wartung);
+    if (key === "reparatur") return num(row.car.reparatur);
     if (key === "batterie") return num(row.car.batterie);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
+    if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "tcoMonat") return row.metrics.tcoMonat;
     if (key === "tcoJahr") return row.metrics.tcoJahr;
     if (key === "tcoKm") return row.metrics.tcoKm;
     if (key === "tcoTotal") return row.metrics.tcoTotal;
     if (key === "rank") return typeof row.rank === "number" ? row.rank : 9999;
     if (key === "kommentar") return row.car.kommentar;
+    if (key === "konfigurationslink") return row.car.konfigurationslink;
     return "";
   }
 
   function getNumericValue(row, key) {
     if (key === "kaufpreis") return num(row.car.kaufpreis);
+    if (key === "rabatt") return num(row.car.rabatt);
+    if (key === "bafaFoerderung") return num(row.car.bafaFoerderung);
+    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car);
     if (key === "leasingrate") return num(row.car.leasingrate);
+    if (key === "versicherung") return num(row.car.versicherung);
+    if (key === "wartung") return num(row.car.wartung);
+    if (key === "reparatur") return num(row.car.reparatur);
     if (key === "batterie") return num(row.car.batterie);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
+    if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "tcoMonat") return row.metrics.tcoMonat;
     if (key === "tcoJahr") return row.metrics.tcoJahr;
     if (key === "tcoKm") return row.metrics.tcoKm;
@@ -215,9 +249,17 @@
 
   function formatCell(row, key) {
     if (key === "kaufpreis") return formatCurrency(num(row.car.kaufpreis));
+    if (key === "rabatt") return formatCurrency(num(row.car.rabatt));
+    if (key === "bafaFoerderung") return formatCurrency(num(row.car.bafaFoerderung));
+    if (key === "effektiverKaufpreis") return formatCurrency(getEffectivePurchasePrice(row.car));
     if (key === "leasingrate") return formatCurrency(num(row.car.leasingrate));
+    if (key === "versicherung") return formatCurrency(num(row.car.versicherung));
+    if (key === "versicherungsart") return row.car.versicherungsart || "-";
+    if (key === "wartung") return formatCurrency(num(row.car.wartung));
+    if (key === "reparatur") return formatCurrency(num(row.car.reparatur));
     if (key === "batterie") return formatNumber(num(row.car.batterie));
     if (key === "winterreichweite") return formatNumber(num(row.car.winterreichweite));
+    if (key === "wertverlust") return formatCurrency(row.metrics.wertverlust);
     if (key === "tcoMonat") return formatCurrency(row.metrics.tcoMonat);
     if (key === "tcoJahr") return formatCurrency(row.metrics.tcoJahr);
     if (key === "tcoKm") return formatCurrency(row.metrics.tcoKm, 2);
@@ -227,6 +269,20 @@
     if (key === "baujahr") return row.car.baujahr || "-";
     if (key === "beschaffungsart") return row.car.beschaffungsart || "-";
     return row.car[key] || "-";
+  }
+
+  function getExternalUrl(value) {
+    const text = String(value || "").trim();
+    if (!text) {
+      return "";
+    }
+
+    try {
+      const url = new URL(text);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
   }
 
   function handleRowKey(event, carId) {
@@ -322,6 +378,22 @@
                     <span class="brand-fallback">{getBrandInitials(row.car.marke)}</span>
                     <span class="brand-text">{row.car.marke || "-"}</span>
                   </div>
+                {:else if column.key === "konfigurationslink"}
+                  {@const configurationUrl = getExternalUrl(row.car.konfigurationslink)}
+                  {#if configurationUrl}
+                    <a
+                      class="table-link"
+                      href={configurationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onclick={(event) => event.stopPropagation()}
+                    >
+                      <iconify-icon icon="mdi:open-in-new" aria-hidden="true"></iconify-icon>
+                      Öffnen
+                    </a>
+                  {:else}
+                    -
+                  {/if}
                 {:else}
                   {formatCell(row, column.key)}
                 {/if}

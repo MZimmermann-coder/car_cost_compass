@@ -38,7 +38,7 @@
       labels: dataRows.map((row) => `Jahr ${row.year}`),
       datasets: [
         {
-          label: "Jahreskosten",
+          label: "Jahreskosten (TCO)",
           data: dataRows.map((row) => row.total),
           borderColor: "#b85d25",
           backgroundColor: "rgba(184, 93, 37, 0.18)",
@@ -48,7 +48,7 @@
           pointHoverRadius: 5
         },
         {
-          label: "Kumuliert",
+          label: "TCO kumuliert",
           data: dataRows.map((row) => row.cumulative),
           borderColor: "#2f6d5a",
           backgroundColor: "rgba(47, 109, 90, 0.2)",

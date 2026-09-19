@@ -108,6 +108,9 @@
         <label for="settings-planungshorizont">Horizont</label>
         <input
           id="settings-planungshorizont"
+          type="number"
+          min="1"
+          step="1"
           bind:value={appState.settings.planungshorizont}
           inputmode="numeric"
           oninput={handleInput}

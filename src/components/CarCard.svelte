@@ -28,17 +28,23 @@
   const brandColor = $derived(getBrandColor(car.marke));
   const fuelInfo = $derived(getFuelInfo(car.kraftstoffart));
   const ownershipInfo = $derived(getOwnershipInfo(car.beschaffungsart));
+  const configurationUrl = $derived(getExternalUrl(car.konfigurationslink));
   const engineColor = $derived(getEngineColor(fuelInfo.type));
   const engineGlow = $derived(toRgba(engineColor, 0.35));
   const actionConfig = $derived({
     edit: actions?.edit ?? true,
     duplicate: actions?.duplicate ?? true,
     view: actions?.view ?? true,
-    delete: actions?.delete ?? true
+    delete: actions?.delete ?? true,
+    link: actions?.link ?? true
   });
   const hasActions = $derived(
     showActions &&
-      (actionConfig.edit || actionConfig.duplicate || actionConfig.view || actionConfig.delete)
+      (actionConfig.edit ||
+        actionConfig.duplicate ||
+        actionConfig.view ||
+        actionConfig.delete ||
+        (actionConfig.link && configurationUrl))
   );
 
   const kilometerText = $derived(formatValue(car.kilometerstand, "km"));
@@ -78,6 +84,20 @@
       return "-";
     }
     return `${formatNumber(num(value))} ${unit}`;
+  }
+
+  function getExternalUrl(value) {
+    const text = String(value || "").trim();
+    if (!text) {
+      return "";
+    }
+
+    try {
+      const url = new URL(text);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
   }
 
   function normalizeBrand(brand) {
@@ -288,6 +308,19 @@
               <iconify-icon icon="mdi:eye-outline" aria-hidden="true"></iconify-icon>
             </button>
           {/if}
+          {#if actionConfig.link && configurationUrl}
+            <a
+              class="icon-button"
+              href={configurationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onclick={(event) => event.stopPropagation()}
+              aria-label="Konfiguration öffnen"
+              title="Konfiguration öffnen"
+            >
+              <iconify-icon icon="mdi:open-in-new" aria-hidden="true"></iconify-icon>
+            </a>
+          {/if}
           {#if actionConfig.delete}
             <button
               type="button"
@@ -331,6 +364,22 @@
         <div class="kpi-side">
           <div class="kpi-side-label">TCO / Jahr</div>
           <div class="kpi-side-value">{formatCurrency(metrics?.tcoJahr ?? 0)}</div>
+        </div>
+      </div>
+
+      <div class="card-cost-grid">
+        <div class="card-cost-item">
+          <div class="kpi-label">Wartung / Monat</div>
+          <div class="card-cost-value">{formatCurrency(num(car.wartung))}</div>
+        </div>
+        <div class="card-cost-item">
+          <div class="kpi-label">Reparatur / Monat</div>
+          <div class="card-cost-value">{formatCurrency(num(car.reparatur))}</div>
+        </div>
+        <div class="card-cost-item">
+          <div class="kpi-label">Versicherung / Monat</div>
+          <div class="card-cost-value">{formatCurrency(num(car.versicherung))}</div>
+          <div class="card-cost-meta">{car.versicherungsart || "-"}</div>
         </div>
       </div>
 
@@ -413,6 +462,19 @@
               <iconify-icon icon="mdi:eye-outline" aria-hidden="true"></iconify-icon>
             </button>
           {/if}
+          {#if actionConfig.link && configurationUrl}
+            <a
+              class="icon-button"
+              href={configurationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onclick={(event) => event.stopPropagation()}
+              aria-label="Konfiguration öffnen"
+              title="Konfiguration öffnen"
+            >
+              <iconify-icon icon="mdi:open-in-new" aria-hidden="true"></iconify-icon>
+            </a>
+          {/if}
           {#if actionConfig.delete}
             <button
               type="button"
@@ -456,6 +518,22 @@
         <div class="kpi-side">
           <div class="kpi-side-label">TCO / Jahr</div>
           <div class="kpi-side-value">{formatCurrency(metrics?.tcoJahr ?? 0)}</div>
+        </div>
+      </div>
+
+      <div class="card-cost-grid">
+        <div class="card-cost-item">
+          <div class="kpi-label">Wartung / Monat</div>
+          <div class="card-cost-value">{formatCurrency(num(car.wartung))}</div>
+        </div>
+        <div class="card-cost-item">
+          <div class="kpi-label">Reparatur / Monat</div>
+          <div class="card-cost-value">{formatCurrency(num(car.reparatur))}</div>
+        </div>
+        <div class="card-cost-item">
+          <div class="kpi-label">Versicherung / Monat</div>
+          <div class="card-cost-value">{formatCurrency(num(car.versicherung))}</div>
+          <div class="card-cost-meta">{car.versicherungsart || "-"}</div>
         </div>
       </div>
 

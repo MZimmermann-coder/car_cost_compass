@@ -1,11 +1,12 @@
 ﻿<script>
   import { formatCurrency, formatNumber } from "../lib/format.js";
-  import { num } from "../lib/compute.js";
+  import { getPurchasePriceAfterDiscount, num } from "../lib/compute.js";
 
   let {
     rows = [],
     car = null,
     settings = null,
+    includeDepreciation = true,
     highlightYear = null,
     onHoverYear
   } = $props();
@@ -62,8 +63,11 @@
     const isNew = car.neu === "Neu";
     const isElectric = car.kraftstoffart === "Elektro";
 
-    const purchasePrice = num(car.kaufpreis);
-    const listPrice = purchasePrice + (isPurchase && isNew ? num(car.rabatt) : 0);
+    const listPrice = num(car.kaufpreis);
+    const purchasePrice = getPurchasePriceAfterDiscount(car);
+    const appliedDiscount = Math.max(0, listPrice - purchasePrice);
+    const bafaAmount = isPurchase && isNew ? num(car.bafaFoerderung) : 0;
+    const fundedPurchasePrice = Math.max(0, purchasePrice - bafaAmount);
     const oppRate = num(settings.opportunitaet) / 100;
     const yearlyKm = num(settings.kmPerYear);
     const maintenanceBase = (num(car.wartung) + num(car.reparatur)) * 12;
@@ -75,13 +79,26 @@
     const rate = getDepreciationRate(age, settings);
     const prevRestwert = rows[index - 1]?.restwert ?? listPrice;
     const baseValue = row.year === 1 ? listPrice : prevRestwert;
+    const estimatedDepreciation = baseValue - row.restwert;
 
-    const kaufpreisTip = isPurchase
+    const listenpreisTip = isPurchase
       ? buildTooltip([
-          "Kaufpreis (nur im Jahr 1 bei Kauf)",
-          `${formatCurrency(purchasePrice)} im Jahr 1`
+          "Listenpreis (Information, nur im Jahr 1)",
+          `${formatCurrency(listPrice)}; Kaufpreis nach Rabatt ${formatCurrency(purchasePrice)} wird separat berücksichtigt`
         ])
-      : buildTooltip(["Kein Kaufpreis bei Leasing", "0 €"]);
+      : buildTooltip(["Kein Listenpreis bei Leasing", "0 €"]);
+
+    const rabattTip = isPurchase && row.year === 1 && includeDepreciation
+      ? buildTooltip([
+          `Listenpreis ${formatCurrency(listPrice)} - Kaufpreis ${formatCurrency(purchasePrice)}`,
+          `-${formatCurrency(appliedDiscount)} als Korrektur des Wertverlusts`
+        ])
+      : buildTooltip([
+          includeDepreciation
+            ? "Kein Rabattabzug in diesem Jahr"
+            : "Rabatt wird zusammen mit dem Wertverlust nicht im TCO berücksichtigt",
+          "0 €"
+        ]);
 
     const steuerMehrTip = isPurchase && isNew
       ? buildTooltip([
@@ -89,6 +106,18 @@
           formatCurrency(num(car.steuerMehr))
         ])
       : buildTooltip(["Keine steuerliche Mehrbelastung", "0 €"]);
+
+    const bafaFoerderungTip = isPurchase && isNew && includeDepreciation
+      ? buildTooltip([
+          "BAFA-Förderung (Abzug nur im Jahr 1 bei Neuwagen)",
+          formatCurrency(-bafaAmount)
+        ])
+      : buildTooltip([
+          !includeDepreciation && isPurchase && isNew
+            ? "BAFA-Förderung wird zusammen mit dem Wertverlust nicht im TCO berücksichtigt"
+            : "Keine BAFA-Förderung",
+          "0 €"
+        ]);
 
     const leasingTip = isLease
       ? buildTooltip([
@@ -117,23 +146,28 @@
       ? buildTooltip([`THG-Quote: -${formatCurrency(num(car.thg))} pro Jahr`, formatCurrency(row.thg)])
       : buildTooltip(["Keine THG-Quote", "0 €"]);
 
-    const wertverlustTip = isPurchase
+    const wertverlustTip = isPurchase && includeDepreciation
       ? buildTooltip([
           `Basiswert ${formatCurrency(baseValue)} x ${formatNumber(rate)}%`,
           formatCurrency(row.wertverlust)
         ])
-      : buildTooltip(["Kein Wertverlust bei Leasing", "0 €"]);
+      : buildTooltip([
+          isPurchase
+            ? `Geschätzter Wertverlust ${formatCurrency(estimatedDepreciation)} wird nicht im TCO berücksichtigt`
+            : "Kein Wertverlust bei Leasing",
+          "0 €"
+        ]);
 
     const opportunitaetTip = isPurchase
       ? buildTooltip([
-          `Kaufpreis ${formatCurrency(purchasePrice)} x ${(1 + oppRate).toFixed(2)} ^ ${row.year - 1} x ${formatNumber(oppRate * 100)}%`,
+          `Kaufpreis nach Rabatt abzüglich BAFA ${formatCurrency(fundedPurchasePrice)} x ${(1 + oppRate).toFixed(2)} ^ ${row.year - 1} x ${formatNumber(oppRate * 100)}%`,
           formatCurrency(row.opportunitaet)
         ])
       : buildTooltip(["Keine Opportunitätskosten bei Leasing", "0 €"]);
 
     const totalTip = buildTooltip([
-      "Summe aller Jahreskosten:",
-      `${formatCurrency(row.kaufpreis)} + ${formatCurrency(row.steuerMehr)} + ${formatCurrency(row.leasing)} + ${formatCurrency(row.versicherungSteuer)} + ${formatCurrency(row.wartungReparatur)} + ${formatCurrency(row.kraftstoff)} + ${formatCurrency(row.thg)} + ${formatCurrency(row.wertverlust)} + ${formatCurrency(row.opportunitaet)}`,
+      "Wirtschaftliche Jahreskosten (Kaufpreis ist nur Information):",
+      `${formatCurrency(row.rabatt)} + ${formatCurrency(row.bafaFoerderung)} + ${formatCurrency(row.steuerMehr)} + ${formatCurrency(row.leasing)} + ${formatCurrency(row.versicherungSteuer)} + ${formatCurrency(row.wartungReparatur)} + ${formatCurrency(row.kraftstoff)} + ${formatCurrency(row.thg)} + ${formatCurrency(row.wertverlust)} + ${formatCurrency(row.opportunitaet)}`,
       formatCurrency(row.total)
     ]);
 
@@ -145,13 +179,15 @@
 
     const restwertTip = isPurchase
       ? buildTooltip([
-          `Basiswert ${formatCurrency(baseValue)} - Wertverlust ${formatCurrency(row.wertverlust)}`,
+          `Basiswert ${formatCurrency(baseValue)} - geschätzter Wertverlust ${formatCurrency(estimatedDepreciation)}`,
           formatCurrency(row.restwert)
         ])
       : buildTooltip(["Kein Restwert bei Leasing", "0 €"]);
 
     return {
-      kaufpreis: kaufpreisTip,
+      listenpreis: listenpreisTip,
+      rabatt: rabattTip,
+      bafaFoerderung: bafaFoerderungTip,
       steuerMehr: steuerMehrTip,
       leasing: leasingTip,
       versicherungSteuer: versicherungTip,
@@ -206,7 +242,9 @@
     <thead>
       <tr>
         <th>Jahr</th>
-        <th>Kaufpreis</th>
+        <th>Listenpreis</th>
+        <th>Rabatt</th>
+        <th>BAFA Förderung</th>
         <th>Steuerliche Mehrbelastung</th>
         <th>Leasing</th>
         <th>Versicherung/Steuer</th>
@@ -215,8 +253,8 @@
         <th>THG-Quote</th>
         <th>Wertverlust</th>
         <th>Opportunität</th>
-        <th>Gesamt</th>
-        <th>Kumuliert</th>
+        <th>Jahreskosten (TCO)</th>
+        <th>TCO kumuliert</th>
         <th>Restwert</th>
       </tr>
     </thead>
@@ -229,7 +267,9 @@
           onmouseleave={() => onHoverYear && onHoverYear(null)}
         >
           <td>{row.year}</td>
-          <td class="has-tooltip" data-tooltip={tips.kaufpreis}>{formatCurrency(row.kaufpreis)}</td>
+          <td class="has-tooltip" data-tooltip={tips.listenpreis}>{formatCurrency(row.listenpreis)}</td>
+          <td class="has-tooltip" data-tooltip={tips.rabatt}>{formatCurrency(row.rabatt)}</td>
+          <td class="has-tooltip" data-tooltip={tips.bafaFoerderung}>{formatCurrency(row.bafaFoerderung)}</td>
           <td class="has-tooltip" data-tooltip={tips.steuerMehr}>{formatCurrency(row.steuerMehr)}</td>
           <td class="has-tooltip" data-tooltip={tips.leasing}>{formatCurrency(row.leasing)}</td>
           <td class="has-tooltip" data-tooltip={tips.versicherungSteuer}>{formatCurrency(row.versicherungSteuer)}</td>

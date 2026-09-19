@@ -1,6 +1,11 @@
 ﻿<script>
-  import { appState, navigateTo } from "../lib/state.svelte.js";
-  import { computeOverviewMetrics, computeYearlyBreakdown, num } from "../lib/compute.js";
+  import { appState, navigateTo, uiState } from "../lib/state.svelte.js";
+  import {
+    computeOverviewMetrics,
+    computeYearlyBreakdown,
+    getPurchasePriceAfterDiscount,
+    num
+  } from "../lib/compute.js";
   import { formatCurrency, formatNumber } from "../lib/format.js";
   import CostTable from "../components/CostTable.svelte";
   import CarCard from "../components/CarCard.svelte";
@@ -10,8 +15,20 @@
   let { carId } = $props();
 
   const car = $derived(appState.cars.find((item) => item.id === carId));
-  const metrics = $derived(car ? computeOverviewMetrics(car, appState.settings) : null);
-  const breakdown = $derived(car ? computeYearlyBreakdown(car, appState.settings) : []);
+  const metrics = $derived(
+    car
+      ? computeOverviewMetrics(car, appState.settings, {
+          includeDepreciation: uiState.includeDepreciation
+        })
+      : null
+  );
+  const breakdown = $derived(
+    car
+      ? computeYearlyBreakdown(car, appState.settings, {
+          includeDepreciation: uiState.includeDepreciation
+        })
+      : []
+  );
   const planningYears = $derived(Math.max(0, Math.round(num(appState.settings.planungshorizont))));
 
   const consumptionUnit = $derived(car?.kraftstoffart === "Elektro" ? "kWh/100km" : "L/100km");
@@ -54,12 +71,16 @@
 
     if (isPurchase) {
       items.splice(1, 0, {
-        label: "Kaufpreis",
+        label: "Listenpreis",
         value: num(car.kaufpreis) ? formatCurrency(num(car.kaufpreis)) : "-"
       });
       if (isNew) {
         items.splice(2, 0,
           { label: "Rabatt", value: num(car.rabatt) ? formatCurrency(num(car.rabatt)) : "-" },
+          {
+            label: "BAFA Förderung",
+            value: num(car.bafaFoerderung) ? formatCurrency(num(car.bafaFoerderung)) : "-"
+          },
           {
             label: "Steuerliche Mehrbelastung",
             value: num(car.steuerMehr) ? formatCurrency(num(car.steuerMehr)) : "-"
@@ -78,7 +99,7 @@
     if (isElectric) {
       items.push(
         {
-          label: "Ladeleistung",
+          label: "Ladeleistung 10-80% DC",
           value: num(car.ladeleistung) ? `${formatNumber(num(car.ladeleistung))} kW` : "-"
         },
         {
@@ -93,14 +114,25 @@
 
   const summaryTooltips = $derived.by(() => {
     if (!car || !metrics) return {};
-    const purchasePrice = car.beschaffungsart === "Kauf" ? num(car.kaufpreis) : 0;
+    const listPrice = car.beschaffungsart === "Kauf" ? num(car.kaufpreis) : 0;
+    const discount = car.beschaffungsart === "Kauf" && car.neu === "Neu"
+      ? num(car.rabatt)
+      : 0;
+    const purchasePrice = getPurchasePriceAfterDiscount(car);
+    const bafaAmount = car.beschaffungsart === "Kauf" && car.neu === "Neu"
+      ? num(car.bafaFoerderung)
+      : 0;
     const cumulative = breakdown.length ? breakdown[breakdown.length - 1].cumulative : 0;
     const tcoTotal = metrics.tcoTotal ?? 0;
     const tcoMonat = planningYears > 0 ? tcoTotal / (planningYears * 12) : 0;
     const restwert = breakdown.length ? breakdown[breakdown.length - 1].restwert : 0;
 
+    const depreciationLabel = uiState.includeDepreciation
+      ? `Wertverlust, Rabatt und BAFA-Förderung berücksichtigt; BAFA-Förderung ${formatCurrency(bafaAmount)} ist im 1. Jahr enthalten`
+      : "Wertverlust, Rabatt und BAFA-Förderung nicht im TCO berücksichtigt";
+
     return {
-      tcoTotal: `Kumulierte Gesamtkosten ${formatCurrency(cumulative)} - Kaufpreis ${formatCurrency(purchasePrice)} = ${formatCurrency(tcoTotal)}`,
+      tcoTotal: `Listenpreis ${formatCurrency(listPrice)} - Rabatt ${formatCurrency(discount)} = Kaufpreis nach Rabatt ${formatCurrency(purchasePrice)}; kumulierte wirtschaftliche Jahreskosten ${formatCurrency(cumulative)} = TCO ${formatCurrency(tcoTotal)}; der Kaufpreis wird nicht zusätzlich zu Wertverlust und Restwert addiert; ${depreciationLabel}`,
       tcoMonat: `TCO gesamt ${formatCurrency(tcoTotal)} / (${planningYears} Jahre x 12 Monate) = ${formatCurrency(tcoMonat)}`,
       restwert: `Restwert nach ${planningYears} Jahren = ${formatCurrency(restwert)}`
     };
@@ -199,6 +231,7 @@
       rows={breakdown}
       car={car}
       settings={appState.settings}
+      includeDepreciation={uiState.includeDepreciation}
       highlightYear={hoverYear}
       onHoverYear={(year) => (hoverYear = year)}
     />

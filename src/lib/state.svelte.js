@@ -7,12 +7,12 @@ const defaultSettings = {
   kostensteigerung: 3,
   planungshorizont: 5,
   depr: {
-    age1: 26,
-    age2_3: 14,
-    age4_5: 6,
-    age6_8: 17,
-    age9_12: 15,
-    age13p: 12
+    age1: 30,
+    age2_3: 15,
+    age4_5: 10,
+    age6_8: 7,
+    age9_12: 5,
+    age13p: 4
   }
 };
 
@@ -20,12 +20,14 @@ const defaultCarFields = {
   marke: "",
   modell: "",
   modellvariante: "",
+  konfigurationslink: "",
   baujahr: "",
   kilometerstand: "",
   neu: "Neu",
   beschaffungsart: "Kauf",
   kaufpreis: "",
   rabatt: "",
+  bafaFoerderung: "",
   steuerMehr: "",
   leasingrate: "",
   versicherungsart: "Vollkasko",
@@ -71,6 +73,7 @@ export const uiState = $state({
   fileHandle: null,
   dirty: false,
   garageMode: "cards",
+  includeDepreciation: true,
   garageFilters: {
     searchTerm: "",
     fuel: "all",
@@ -81,6 +84,67 @@ export const uiState = $state({
     winterMax: ""
   }
 });
+
+const uiStorageKey = "car-cost-compass-ui-state";
+const validViews = new Set(["garage", "settings", "detail"]);
+const validGarageModes = new Set(["cards", "table"]);
+
+function persistUiState() {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      uiStorageKey,
+      JSON.stringify({
+        view: uiState.currentView,
+        carId: uiState.selectedCarId,
+        garageMode: uiState.garageMode,
+        includeDepreciation: uiState.includeDepreciation
+      })
+    );
+  } catch (error) {
+    console.warn("Could not persist UI state.", error);
+  }
+}
+
+function restoreUiState() {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(uiStorageKey) || "null");
+    if (!stored || typeof stored !== "object") {
+      return;
+    }
+
+    const storedView = stored.view === "overview" ? "garage" : stored.view;
+    if (validViews.has(storedView)) {
+      uiState.currentView = storedView;
+    }
+    if (stored.carId !== undefined) {
+      uiState.selectedCarId = stored.carId;
+    }
+    if (validGarageModes.has(stored.garageMode)) {
+      uiState.garageMode = stored.garageMode;
+    }
+    if (typeof stored.includeDepreciation === "boolean") {
+      uiState.includeDepreciation = stored.includeDepreciation;
+    }
+
+    if (
+      uiState.currentView === "detail" &&
+      !appState.cars.some((car) => car.id === uiState.selectedCarId)
+    ) {
+      uiState.currentView = "garage";
+      uiState.selectedCarId = null;
+    }
+  } catch (error) {
+    console.warn("Could not restore UI state.", error);
+  }
+}
 
 export function markDirty() {
   uiState.dirty = true;
@@ -94,17 +158,33 @@ export function navigateTo(view) {
   if (view === "overview") {
     uiState.currentView = "garage";
     uiState.garageMode = "table";
+    persistUiState();
     pushHistory("garage");
     return;
   }
   uiState.currentView = view;
+  persistUiState();
   pushHistory(view);
 }
 
 export function viewCarDetail(carId) {
   uiState.selectedCarId = carId;
   uiState.currentView = "detail";
+  persistUiState();
   pushHistory("detail", carId);
+}
+
+export function setGarageMode(mode) {
+  if (!validGarageModes.has(mode)) {
+    return;
+  }
+  uiState.garageMode = mode;
+  persistUiState();
+}
+
+export function setIncludeDepreciation(value) {
+  uiState.includeDepreciation = Boolean(value);
+  persistUiState();
 }
 
 export function normalizeState(raw) {
@@ -166,6 +246,7 @@ export function initializeFromStore() {
 }
 
 initializeFromStore();
+restoreUiState();
 
 let handlingPopstate = false;
 
@@ -181,6 +262,7 @@ function applyHistoryState(state) {
   if (uiState.currentView === "detail" && !uiState.selectedCarId) {
     uiState.currentView = "garage";
   }
+  persistUiState();
 }
 
 function pushHistory(view, carId = null) {
@@ -190,7 +272,8 @@ function pushHistory(view, carId = null) {
   const state = {
     view,
     carId,
-    garageMode: uiState.garageMode
+    garageMode: uiState.garageMode,
+    includeDepreciation: uiState.includeDepreciation
   };
   history.pushState(state, "", "");
 }
