@@ -78,6 +78,10 @@
         )
       },
       {
+        label: "One-Pedal bis Stillstand",
+        value: car.onePedalBisStillstand || "-"
+      },
+      {
         label: "Verbrauch",
         value: num(car.verbrauch) ? `${formatNumber(num(car.verbrauch))} ${consumptionUnit}` : "-"
       }

@@ -454,6 +454,15 @@
           </select>
         </div>
         <div class="form-field">
+          <label for="car-one-pedal-bis-stillstand">One-Pedal bis Stillstand</label>
+          <select id="car-one-pedal-bis-stillstand" bind:value={draft.onePedalBisStillstand}>
+            <option value="">Nicht angegeben</option>
+            <option value="Ja">Ja</option>
+            <option value="Nein">Nein</option>
+          </select>
+          <div class="hint">Vollständig anhalten, ohne das Bremspedal zu betätigen</div>
+        </div>
+        <div class="form-field">
           <label for="car-verbrauch">
             Verbrauch <span class="required-star">*</span>
           </label>

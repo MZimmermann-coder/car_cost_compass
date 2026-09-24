@@ -46,6 +46,7 @@
     { key: "serviceintervallKilometer", label: "Service (km)" },
     { key: "batterie", label: "Nettobatterie" },
     { key: "winterreichweite", label: "Winterreichweite" },
+    { key: "onePedalBisStillstand", label: "One-Pedal bis Stillstand" },
     { key: "wertverlust", label: "Wertverlust" },
     { key: "tcoMonat", label: "TCO/Monat" },
     { key: "tcoJahr", label: "TCO/Jahr" },
@@ -218,6 +219,7 @@
     if (key === "serviceintervallKilometer") return num(row.car.serviceintervallKilometer);
     if (key === "batterie") return num(row.car.batterie);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
+    if (key === "onePedalBisStillstand") return row.car.onePedalBisStillstand;
     if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "tcoMonat") return row.metrics.tcoMonat;
     if (key === "tcoJahr") return row.metrics.tcoJahr;
@@ -295,6 +297,7 @@
     }
     if (key === "batterie") return formatNumber(num(row.car.batterie));
     if (key === "winterreichweite") return formatNumber(num(row.car.winterreichweite));
+    if (key === "onePedalBisStillstand") return row.car.onePedalBisStillstand || "-";
     if (key === "kofferraumVolumen") {
       return num(row.car.kofferraumVolumen) ? `${formatNumber(num(row.car.kofferraumVolumen))} l` : "-";
     }

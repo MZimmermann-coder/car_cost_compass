@@ -46,6 +46,7 @@ const defaultCarFields = {
   serviceintervallJahre: "",
   serviceintervallKilometer: "",
   kraftstoffart: "Benzin",
+  onePedalBisStillstand: "",
   verbrauch: "",
   winterreichweite: "",
   batterie: "",

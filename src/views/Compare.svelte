@@ -91,6 +91,7 @@
         { key: "verbrauch", label: "Verbrauch", format: "number", better: "lower" },
         { key: "batterie", label: "Batterie", format: "number", unit: "kWh", hideZero: true, better: "higher" },
         { key: "winterreichweite", label: "Winterreichweite", format: "number", unit: "km", hideZero: true, better: "higher" },
+        { key: "onePedalBisStillstand", label: "One-Pedal bis Stillstand", format: "text" },
         { key: "garantieJahre", label: "Herstellergarantie", format: "number", unit: "Jahre", hideZero: true },
         { key: "serviceintervallJahre", label: "Service nach Zeit", format: "number", unit: "Jahre", hideZero: true },
         { key: "serviceintervallKilometer", label: "Service nach Strecke", format: "number", unit: "km", hideZero: true }
@@ -182,6 +183,7 @@
     if (key === "neu") return car.neu || "-";
     if (key === "beschaffungsart") return car.beschaffungsart || "-";
     if (key === "kraftstoffart") return car.kraftstoffart || "-";
+    if (key === "onePedalBisStillstand") return car.onePedalBisStillstand || "-";
     return "-";
   }
 
