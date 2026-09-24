@@ -40,3 +40,20 @@ export function formatPercent(value, fractionDigits = 1) {
   }).format(value) + " %";
 }
 
+export function formatServiceInterval(yearsValue, kilometersValue) {
+  const years = Number(yearsValue);
+  const kilometers = Number(kilometersValue);
+  const parts = [];
+
+  if (Number.isFinite(years) && years > 0) {
+    const fractionDigits = Number.isInteger(years) ? 0 : 1;
+    parts.push(`${formatNumber(years, fractionDigits)} ${years === 1 ? "Jahr" : "Jahre"}`);
+  }
+
+  if (Number.isFinite(kilometers) && kilometers > 0) {
+    parts.push(`${formatNumber(kilometers)} km`);
+  }
+
+  return parts.length ? parts.join(" oder ") : "-";
+}
+

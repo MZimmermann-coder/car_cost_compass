@@ -90,7 +90,9 @@
         { key: "kraftstoffart", label: "Antrieb", format: "text" },
         { key: "verbrauch", label: "Verbrauch", format: "number", better: "lower" },
         { key: "batterie", label: "Batterie", format: "number", unit: "kWh", hideZero: true, better: "higher" },
-        { key: "winterreichweite", label: "Winterreichweite", format: "number", unit: "km", hideZero: true, better: "higher" }
+        { key: "winterreichweite", label: "Winterreichweite", format: "number", unit: "km", hideZero: true, better: "higher" },
+        { key: "serviceintervallJahre", label: "Service nach Zeit", format: "number", unit: "Jahre", hideZero: true },
+        { key: "serviceintervallKilometer", label: "Service nach Strecke", format: "number", unit: "km", hideZero: true }
       ]
     },
     {
@@ -169,6 +171,8 @@
     if (key === "verbrauch") return num(car.verbrauch);
     if (key === "batterie") return num(car.batterie);
     if (key === "winterreichweite") return num(car.winterreichweite);
+    if (key === "serviceintervallJahre") return num(car.serviceintervallJahre);
+    if (key === "serviceintervallKilometer") return num(car.serviceintervallKilometer);
     if (key === "kofferraumVolumen") return num(car.kofferraumVolumen);
     if (key === "laenge") return num(car.laenge);
     if (key === "breite") return num(car.breite);
@@ -187,6 +191,9 @@
     }
     if (row.format === "number") {
       if (row.hideZero && !value) return "-";
+      if (row.key === "serviceintervallJahre") {
+        return `${formatNumber(value, Number.isInteger(value) ? 0 : 1)} ${value === 1 ? "Jahr" : "Jahre"}`;
+      }
       const unit = row.key === "verbrauch"
         ? car.kraftstoffart === "Elektro" ? "kWh/100 km" : "L/100 km"
         : row.unit;

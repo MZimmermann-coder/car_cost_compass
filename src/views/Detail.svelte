@@ -7,7 +7,7 @@
     getPurchasePriceAfterDiscount,
     num
   } from "../lib/compute.js";
-  import { formatCurrency, formatNumber } from "../lib/format.js";
+  import { formatCurrency, formatNumber, formatServiceInterval } from "../lib/format.js";
   import CostTable from "../components/CostTable.svelte";
   import CarCard from "../components/CarCard.svelte";
   import CarEditor from "../components/CarEditor.svelte";
@@ -63,6 +63,13 @@
       {
         label: "Reparatur / Monat",
         value: num(car.reparatur) ? formatCurrency(num(car.reparatur)) : "-"
+      },
+      {
+        label: "Serviceintervall",
+        value: formatServiceInterval(
+          num(car.serviceintervallJahre),
+          num(car.serviceintervallKilometer)
+        )
       },
       {
         label: "Verbrauch",

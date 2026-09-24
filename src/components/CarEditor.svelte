@@ -397,6 +397,37 @@
     </div>
 
     <div class="card">
+      <div class="editor-card-header">
+        <div>
+          <h3>Serviceintervall</h3>
+          <p>Beide Angaben sind optional. Sind beide gesetzt, gilt der Wert, der zuerst erreicht wird.</p>
+        </div>
+      </div>
+      <div class="form-grid editor-form-grid editor-form-grid-compact">
+        <div class="form-field">
+          <label for="car-serviceintervall-jahre">Zeitintervall</label>
+          <input
+            id="car-serviceintervall-jahre"
+            bind:value={draft.serviceintervallJahre}
+            inputmode="decimal"
+            placeholder="z.B. 2"
+          />
+          <div class="hint">Jahre</div>
+        </div>
+        <div class="form-field">
+          <label for="car-serviceintervall-kilometer">Kilometerintervall</label>
+          <input
+            id="car-serviceintervall-kilometer"
+            bind:value={draft.serviceintervallKilometer}
+            inputmode="numeric"
+            placeholder="z.B. 30000"
+          />
+          <div class="hint">km</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <h3>Antrieb & Verbrauch</h3>
       <div class="form-grid editor-form-grid">
         <div class="form-field">

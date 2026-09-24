@@ -41,6 +41,8 @@
     { key: "versicherungsart", label: "Versicherungsart" },
     { key: "wartung", label: "Wartung / Monat" },
     { key: "reparatur", label: "Reparatur / Monat" },
+    { key: "serviceintervallJahre", label: "Service (Jahre)" },
+    { key: "serviceintervallKilometer", label: "Service (km)" },
     { key: "batterie", label: "Nettobatterie" },
     { key: "winterreichweite", label: "Winterreichweite" },
     { key: "wertverlust", label: "Wertverlust" },
@@ -210,6 +212,8 @@
     if (key === "versicherungsart") return row.car.versicherungsart;
     if (key === "wartung") return num(row.car.wartung);
     if (key === "reparatur") return num(row.car.reparatur);
+    if (key === "serviceintervallJahre") return num(row.car.serviceintervallJahre);
+    if (key === "serviceintervallKilometer") return num(row.car.serviceintervallKilometer);
     if (key === "batterie") return num(row.car.batterie);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
     if (key === "wertverlust") return row.metrics.wertverlust;
@@ -274,6 +278,15 @@
     if (key === "versicherungsart") return row.car.versicherungsart || "-";
     if (key === "wartung") return formatCurrency(num(row.car.wartung));
     if (key === "reparatur") return formatCurrency(num(row.car.reparatur));
+    if (key === "serviceintervallJahre") {
+      const years = num(row.car.serviceintervallJahre);
+      return years ? `${formatNumber(years, Number.isInteger(years) ? 0 : 1)} ${years === 1 ? "Jahr" : "Jahre"}` : "-";
+    }
+    if (key === "serviceintervallKilometer") {
+      return num(row.car.serviceintervallKilometer)
+        ? `${formatNumber(num(row.car.serviceintervallKilometer))} km`
+        : "-";
+    }
     if (key === "batterie") return formatNumber(num(row.car.batterie));
     if (key === "winterreichweite") return formatNumber(num(row.car.winterreichweite));
     if (key === "kofferraumVolumen") {
