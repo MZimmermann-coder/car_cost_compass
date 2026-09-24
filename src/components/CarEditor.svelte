@@ -399,11 +399,21 @@
     <div class="card">
       <div class="editor-card-header">
         <div>
-          <h3>Serviceintervall</h3>
-          <p>Beide Angaben sind optional. Sind beide gesetzt, gilt der Wert, der zuerst erreicht wird.</p>
+          <h3>Garantie & Service</h3>
+          <p>Alle Angaben sind optional. Die Garantie meint die allgemeine Fahrzeuggarantie.</p>
         </div>
       </div>
-      <div class="form-grid editor-form-grid editor-form-grid-compact">
+      <div class="form-grid editor-form-grid">
+        <div class="form-field">
+          <label for="car-garantie-jahre">Herstellergarantie</label>
+          <input
+            id="car-garantie-jahre"
+            bind:value={draft.garantieJahre}
+            inputmode="decimal"
+            placeholder="z.B. 7"
+          />
+          <div class="hint">Jahre</div>
+        </div>
         <div class="form-field">
           <label for="car-serviceintervall-jahre">Zeitintervall</label>
           <input
@@ -425,6 +435,7 @@
           <div class="hint">km</div>
         </div>
       </div>
+      <p class="hint">Beim Service gilt der Wert, der zuerst erreicht wird.</p>
     </div>
 
     <div class="card">

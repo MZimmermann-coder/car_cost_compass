@@ -42,6 +42,7 @@ const defaultCarFields = {
   steuerMonat: "",
   wartung: "",
   reparatur: "",
+  garantieJahre: "",
   serviceintervallJahre: "",
   serviceintervallKilometer: "",
   kraftstoffart: "Benzin",

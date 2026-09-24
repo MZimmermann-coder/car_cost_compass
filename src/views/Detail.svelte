@@ -65,6 +65,12 @@
         value: num(car.reparatur) ? formatCurrency(num(car.reparatur)) : "-"
       },
       {
+        label: "Herstellergarantie",
+        value: num(car.garantieJahre)
+          ? `${formatNumber(num(car.garantieJahre), Number.isInteger(num(car.garantieJahre)) ? 0 : 1)} ${num(car.garantieJahre) === 1 ? "Jahr" : "Jahre"}`
+          : "-"
+      },
+      {
         label: "Serviceintervall",
         value: formatServiceInterval(
           num(car.serviceintervallJahre),
