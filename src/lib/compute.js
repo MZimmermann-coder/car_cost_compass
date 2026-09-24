@@ -55,11 +55,21 @@ export function getPurchasePriceAfterDiscount(car) {
   return Math.max(0, listPrice - discount);
 }
 
-export function getEffectivePurchasePrice(car) {
+export function getBafaAmount(car, settings) {
+  if (
+    !car ||
+    car.beschaffungsart !== "Kauf" ||
+    car.neu !== "Neu" ||
+    car.kraftstoffart !== "Elektro"
+  ) {
+    return 0;
+  }
+  return num(settings?.bafaFoerderung);
+}
+
+export function getEffectivePurchasePrice(car, settings) {
   const purchasePrice = getPurchasePriceAfterDiscount(car);
-  const bafaAmount = car?.beschaffungsart === "Kauf" && car?.neu === "Neu"
-    ? num(car.bafaFoerderung)
-    : 0;
+  const bafaAmount = getBafaAmount(car, settings);
   return Math.max(0, purchasePrice - bafaAmount);
 }
 
@@ -76,9 +86,36 @@ export function computeYearlyBreakdown(car, settings, options = {}) {
   const isElectric = car.kraftstoffart === "Elektro";
 
   const listPrice = num(car.kaufpreis);
+  const hasCustomFiveYearResidualValue = String(car.restwertNach5Jahren ?? "").trim() !== "";
+  const customFiveYearResidualValue = Math.max(0, num(car.restwertNach5Jahren));
+  const useCustomFiveYearResidualValue =
+    isPurchase && years === 5 && hasCustomFiveYearResidualValue;
+  const estimatedDepreciationByYear = [];
+  const estimatedRestwertByYear = [];
+  let estimatedRestwert = listPrice;
+
+  if (useCustomFiveYearResidualValue) {
+    for (let year = 1; year <= years; year += 1) {
+      const age = computeAge(car.baujahr, year);
+      const rate = getDepreciationRate(age, settings);
+      const estimatedDepreciation = estimatedRestwert * (rate / 100);
+      estimatedDepreciationByYear.push(estimatedDepreciation);
+      estimatedRestwert = Math.max(0, estimatedRestwert - estimatedDepreciation);
+      estimatedRestwertByYear.push(estimatedRestwert);
+    }
+  }
+
+  const estimatedTotalDepreciation = estimatedDepreciationByYear.reduce(
+    (sum, value) => sum + value,
+    0
+  );
+  const targetTotalDepreciation = listPrice - customFiveYearResidualValue;
+  const depreciationCalibrationFactor = estimatedTotalDepreciation !== 0
+    ? targetTotalDepreciation / estimatedTotalDepreciation
+    : 0;
   const purchasePrice = getPurchasePriceAfterDiscount(car);
   const appliedDiscount = Math.max(0, listPrice - purchasePrice);
-  const bafaAmount = isPurchase && isNew ? num(car.bafaFoerderung) : 0;
+  const bafaAmount = getBafaAmount(car, settings);
   const fundedPurchasePrice = Math.max(0, purchasePrice - bafaAmount);
   const oppRate = num(settings.opportunitaet) / 100;
   const yearlyKm = num(settings.kmPerYear);
@@ -88,12 +125,22 @@ export function computeYearlyBreakdown(car, settings, options = {}) {
     const rate = getDepreciationRate(age, settings);
     let restwert = 0;
     let wertverlust = 0;
+    let estimatedDepreciation = 0;
 
     if (isPurchase) {
       const base = year === 1 ? listPrice : previousRest;
-      const estimatedDepreciation = base * (rate / 100);
-      wertverlust = includeDepreciation ? estimatedDepreciation : 0;
-      restwert = base - estimatedDepreciation;
+      estimatedDepreciation = base * (rate / 100);
+      const calibratedDepreciation = useCustomFiveYearResidualValue
+        ? estimatedTotalDepreciation !== 0
+          ? estimatedDepreciationByYear[year - 1] * depreciationCalibrationFactor
+          : targetTotalDepreciation / years
+        : estimatedDepreciation;
+      restwert = useCustomFiveYearResidualValue
+        ? year === years
+          ? customFiveYearResidualValue
+          : base - calibratedDepreciation
+        : Math.max(0, base - estimatedDepreciation);
+      wertverlust = includeDepreciation ? base - restwert : 0;
       previousRest = restwert;
     }
 
@@ -110,7 +157,7 @@ export function computeYearlyBreakdown(car, settings, options = {}) {
     const fuelPrice = getFuelPrice(car.kraftstoffart, settings);
     const kraftstoff = (yearlyKm / 100) * num(car.verbrauch) * fuelPrice;
 
-    const thg = isElectric ? -num(car.thg) : 0;
+    const thg = isElectric ? -num(settings.thg) : 0;
     const opportunitaet = isPurchase
       ? fundedPurchasePrice * Math.pow(1 + oppRate, year - 1) * oppRate
       : 0;
@@ -148,7 +195,15 @@ export function computeYearlyBreakdown(car, settings, options = {}) {
       opportunitaet,
       total,
       cumulative,
-      restwert
+      restwert,
+      estimatedDepreciation: useCustomFiveYearResidualValue
+        ? estimatedDepreciationByYear[year - 1]
+        : estimatedDepreciation,
+      estimatedRestwert: useCustomFiveYearResidualValue
+        ? estimatedRestwertByYear[year - 1]
+        : restwert,
+      depreciationCalibrationFactor,
+      usesCustomFiveYearResidualValue: useCustomFiveYearResidualValue
     });
   }
 

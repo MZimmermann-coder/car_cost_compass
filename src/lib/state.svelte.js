@@ -3,6 +3,8 @@ const defaultSettings = {
   benzinpreis: 1.85,
   dieselpreis: 1.75,
   strompreis: 0.35,
+  bafaFoerderung: 5000,
+  thg: 300,
   opportunitaet: 4,
   kostensteigerung: 3,
   planungshorizont: 5,
@@ -23,11 +25,15 @@ const defaultCarFields = {
   konfigurationslink: "",
   baujahr: "",
   kilometerstand: "",
+  kofferraumVolumen: "",
+  laenge: "",
+  breite: "",
+  hoehe: "",
   neu: "Neu",
   beschaffungsart: "Kauf",
   kaufpreis: "",
+  restwertNach5Jahren: "",
   rabatt: "",
-  bafaFoerderung: "",
   steuerMehr: "",
   leasingrate: "",
   versicherungsart: "Vollkasko",
@@ -41,7 +47,6 @@ const defaultCarFields = {
   winterreichweite: "",
   batterie: "",
   ladeleistung: "",
-  thg: "",
   kommentar: ""
 };
 
@@ -57,7 +62,11 @@ function createId() {
 export function createEmptyCar() {
   return {
     id: createId(),
-    ...structuredClone(defaultCarFields)
+    ...structuredClone(defaultCarFields),
+    baujahr: String(new Date().getFullYear()),
+    kilometerstand: "0",
+    kraftstoffart: "Elektro",
+    steuerMonat: "0"
   };
 }
 
@@ -225,11 +234,17 @@ export function normalizeState(raw) {
   const normalizedCars = rawCars.map((car) => {
     const base = structuredClone(defaultCarFields);
     const safeCar = car && typeof car === "object" ? car : {};
-    return {
+    const normalizedCar = {
       id: safeCar.id || createId(),
       ...base,
       ...safeCar
     };
+    if (normalizedCar.kraftstoffart === "Elektro") {
+      normalizedCar.steuerMonat = "0";
+    }
+    delete normalizedCar.bafaFoerderung;
+    delete normalizedCar.thg;
+    return normalizedCar;
   });
 
   return {

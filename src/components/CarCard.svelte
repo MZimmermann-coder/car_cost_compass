@@ -20,10 +20,7 @@
   const title = $derived(`${car.marke || ""} ${car.modell || ""}`.trim());
   const isElectric = $derived(car.kraftstoffart === "Elektro");
 
-  const brandSlug = $derived(getBrandSlug(car.marke));
-  const brandLogoUrl = $derived(
-    brandSlug ? `https://cdn.simpleicons.org/${brandSlug}/1a1a1a` : ""
-  );
+  const brandLogoUrl = $derived(getBrandLogoUrl(car.marke));
   const brandInitials = $derived(getBrandInitials(car.marke));
   const brandColor = $derived(getBrandColor(car.marke));
   const fuelInfo = $derived(getFuelInfo(car.kraftstoffart));
@@ -51,11 +48,20 @@
   const batteryText = $derived(formatValue(car.batterie, "kWh"));
   const winterRangeText = $derived(formatValue(car.winterreichweite, "km"));
   const hasWinterRange = $derived(num(car.winterreichweite) > 0);
+  const hasTrunkVolume = $derived(num(car.kofferraumVolumen) > 0);
+  const exteriorDimensionsText = $derived.by(() => {
+    const values = [car.laenge, car.breite, car.hoehe];
+    if (!values.some((value) => num(value) > 0)) {
+      return "";
+    }
+    const formatted = values.map((value) => num(value) > 0 ? formatNumber(num(value)) : "–");
+    return `${formatted.join(" × ")} mm`;
+  });
 
   let logoFailed = $state(false);
 
   $effect(() => {
-    brandSlug;
+    brandLogoUrl;
     logoFailed = false;
   });
 
@@ -144,6 +150,14 @@
       landrover: "landrover"
     };
     return map[normalized] || normalized;
+  }
+
+  function getBrandLogoUrl(brand) {
+    if (normalizeBrand(brand) === "cupra") {
+      return "https://upload.wikimedia.org/wikipedia/commons/e/ef/Cupra_symbol.svg";
+    }
+    const slug = getBrandSlug(brand);
+    return slug ? `https://cdn.simpleicons.org/${slug}/1a1a1a` : "";
   }
 
   function getBrandInitials(brand) {
@@ -355,6 +369,23 @@
       {/if}
     </div>
 
+    {#if hasTrunkVolume || exteriorDimensionsText}
+      <div class="vehicle-size-row">
+        {#if hasTrunkVolume}
+          <span>
+            <iconify-icon icon="mdi:car-back" aria-hidden="true"></iconify-icon>
+            {formatNumber(num(car.kofferraumVolumen))} l Kofferraum
+          </span>
+        {/if}
+        {#if exteriorDimensionsText}
+          <span>
+            <iconify-icon icon="mdi:ruler-square" aria-hidden="true"></iconify-icon>
+            {exteriorDimensionsText}
+          </span>
+        {/if}
+      </div>
+    {/if}
+
     <div class="card-content">
       <div class="kpi-panel">
         <div>
@@ -508,6 +539,23 @@
         <span class="chip">Winterreichweite {winterRangeText}</span>
       {/if}
     </div>
+
+    {#if hasTrunkVolume || exteriorDimensionsText}
+      <div class="vehicle-size-row">
+        {#if hasTrunkVolume}
+          <span>
+            <iconify-icon icon="mdi:car-back" aria-hidden="true"></iconify-icon>
+            {formatNumber(num(car.kofferraumVolumen))} l Kofferraum
+          </span>
+        {/if}
+        {#if exteriorDimensionsText}
+          <span>
+            <iconify-icon icon="mdi:ruler-square" aria-hidden="true"></iconify-icon>
+            {exteriorDimensionsText}
+          </span>
+        {/if}
+      </div>
+    {/if}
 
     <div class="card-content">
       <div class="kpi-panel">

@@ -8,6 +8,9 @@
 
   $effect(() => {
     const base = car ? { ...car } : createEmptyCar();
+    if (base.kraftstoffart === "Elektro") {
+      base.steuerMonat = "0";
+    }
     Object.assign(draft, base);
   });
 
@@ -79,6 +82,12 @@
     }
   }
 
+  function handleFuelTypeChange() {
+    if (draft.kraftstoffart === "Elektro") {
+      draft.steuerMonat = "0";
+    }
+  }
+
   function handleSave() {
     if (!validateFields()) {
       return;
@@ -88,8 +97,8 @@
 
     if (isLease) {
       cleaned.kaufpreis = "0";
+      cleaned.restwertNach5Jahren = "";
       cleaned.rabatt = "0";
-      cleaned.bafaFoerderung = "0";
       cleaned.steuerMehr = "0";
     }
 
@@ -99,15 +108,15 @@
 
     if (!isNew) {
       cleaned.rabatt = "0";
-      cleaned.bafaFoerderung = "0";
       cleaned.steuerMehr = "0";
     }
 
     if (!isElectric) {
       cleaned.batterie = "0";
       cleaned.ladeleistung = "0";
-      cleaned.thg = "0";
       cleaned.winterreichweite = "0";
+    } else {
+      cleaned.steuerMonat = "0";
     }
 
     if (isEdit && car) {
@@ -146,7 +155,7 @@
     {/if}
     <div class="card">
       <h3>Basisdaten</h3>
-      <div class="form-grid">
+      <div class="form-grid editor-form-grid">
         <div class="form-field">
           <label for="car-marke">Marke</label>
           <input id="car-marke" bind:value={draft.marke} placeholder="z.B. VW" />
@@ -203,8 +212,44 @@
     </div>
 
     <div class="card">
+      <div class="editor-card-header">
+        <div>
+          <h3>Maße & Stauraum</h3>
+          <p>Außenmaße ohne Außenspiegel und Kofferraum bei aufgestellter Rückbank.</p>
+        </div>
+      </div>
+      <div class="form-grid editor-form-grid">
+        <div class="form-field">
+          <label for="car-kofferraum-volumen">Kofferraumvolumen</label>
+          <input
+            id="car-kofferraum-volumen"
+            bind:value={draft.kofferraumVolumen}
+            inputmode="decimal"
+            placeholder="z.B. 460"
+          />
+          <div class="hint">Liter</div>
+        </div>
+        <div class="form-field">
+          <label for="car-laenge">Länge</label>
+          <input id="car-laenge" bind:value={draft.laenge} inputmode="decimal" placeholder="z.B. 4300" />
+          <div class="hint">mm, ohne Anhängevorrichtung</div>
+        </div>
+        <div class="form-field">
+          <label for="car-breite">Breite</label>
+          <input id="car-breite" bind:value={draft.breite} inputmode="decimal" placeholder="z.B. 1850" />
+          <div class="hint">mm, ohne Außenspiegel</div>
+        </div>
+        <div class="form-field">
+          <label for="car-hoehe">Höhe</label>
+          <input id="car-hoehe" bind:value={draft.hoehe} inputmode="decimal" placeholder="z.B. 1565" />
+          <div class="hint">mm, inkl. serienmäßiger Dachreling</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <h3>Besitz</h3>
-      <div class="form-grid">
+      <div class="form-grid editor-form-grid editor-form-grid-compact">
         <div class="form-field">
           <label for="car-neu">Neu/Gebraucht</label>
           <select id="car-neu" bind:value={draft.neu}>
@@ -223,8 +268,8 @@
     </div>
 
     <div class="card">
-      <h3>Kosten</h3>
-      <div class="form-grid">
+      <h3>Anschaffung & Finanzierung</h3>
+      <div class="form-grid editor-form-grid">
         <div class="form-field">
           <label for="car-kaufpreis">
             Listenpreis {#if isPurchase}<span class="required-star">*</span>{/if}
@@ -249,16 +294,6 @@
           <label for="car-rabatt">Rabatt</label>
           <input id="car-rabatt" bind:value={draft.rabatt} inputmode="decimal" disabled={isLease || !isNew} />
           <div class="hint">€</div>
-        </div>
-        <div class="form-field">
-          <label for="car-bafa-foerderung">BAFA Förderung</label>
-          <input
-            id="car-bafa-foerderung"
-            bind:value={draft.bafaFoerderung}
-            inputmode="decimal"
-            disabled={isLease || !isNew}
-          />
-          <div class="hint">€ (einmalig)</div>
         </div>
         <div class="form-field">
           <label for="car-steuer-mehr">Steuerliche Mehrbelastung</label>
@@ -290,6 +325,37 @@
             <div class="field-error" id="error-leasingrate">Pflichtfeld</div>
           {/if}
         </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="editor-card-header">
+        <div>
+          <h3>Autokostencheck</h3>
+          <p>Restwert, Versicherung, Steuer sowie Wartungs- und Reparaturkosten.</p>
+        </div>
+        <a
+          class="editor-source-link"
+          href="https://www.autokostencheck.de"
+          target="_blank"
+          rel="noopener noreferrer"
+          tabindex="-1"
+          title="Autokostencheck öffnen"
+        >
+          autokostencheck.de
+        </a>
+      </div>
+      <div class="form-grid editor-form-grid">
+        <div class="form-field">
+          <label for="car-restwert-nach-5-jahren">Geschätzter Restwert nach 5 Jahren</label>
+          <input
+            id="car-restwert-nach-5-jahren"
+            bind:value={draft.restwertNach5Jahren}
+            inputmode="decimal"
+            disabled={isLease}
+          />
+          <div class="hint">€</div>
+        </div>
         <div class="form-field">
           <label for="car-versicherungsart">Versicherungsart</label>
           <select id="car-versicherungsart" bind:value={draft.versicherungsart}>
@@ -306,75 +372,40 @@
           <label for="car-versicherung">Versicherung</label>
           <input id="car-versicherung" bind:value={draft.versicherung} inputmode="decimal" />
           <div class="hint">€/Monat</div>
-          <div class="field-help">
-            Tipp: Werte findest du bei
-            <a
-              href="https://www.autokostencheck.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Autokostencheck öffnen"
-            >
-              autokostencheck.de
-            </a>
-          </div>
         </div>
         <div class="form-field">
           <label for="car-steuer-monat">Steuer</label>
-          <input id="car-steuer-monat" bind:value={draft.steuerMonat} inputmode="decimal" />
+          <input
+            id="car-steuer-monat"
+            bind:value={draft.steuerMonat}
+            inputmode="decimal"
+            disabled={isElectric}
+          />
           <div class="hint">€/Monat</div>
-          <div class="field-help">
-            Tipp: Werte findest du bei
-            <a
-              href="https://www.autokostencheck.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Autokostencheck öffnen"
-            >
-              autokostencheck.de
-            </a>
-          </div>
         </div>
         <div class="form-field">
           <label for="car-wartung">Wartung</label>
           <input id="car-wartung" bind:value={draft.wartung} inputmode="decimal" />
           <div class="hint">€/Monat</div>
-          <div class="field-help">
-            Tipp: Werte findest du bei
-            <a
-              href="https://www.autokostencheck.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Autokostencheck öffnen"
-            >
-              autokostencheck.de
-            </a>
-          </div>
         </div>
         <div class="form-field">
           <label for="car-reparatur">Reparatur</label>
           <input id="car-reparatur" bind:value={draft.reparatur} inputmode="decimal" />
           <div class="hint">€/Monat</div>
-          <div class="field-help">
-            Tipp: Werte findest du bei
-            <a
-              href="https://www.autokostencheck.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Autokostencheck öffnen"
-            >
-              autokostencheck.de
-            </a>
-          </div>
         </div>
       </div>
     </div>
 
     <div class="card">
       <h3>Antrieb & Verbrauch</h3>
-      <div class="form-grid">
+      <div class="form-grid editor-form-grid">
         <div class="form-field">
           <label for="car-kraftstoffart">Kraftstoffart</label>
-          <select id="car-kraftstoffart" bind:value={draft.kraftstoffart}>
+          <select
+            id="car-kraftstoffart"
+            bind:value={draft.kraftstoffart}
+            onchange={handleFuelTypeChange}
+          >
             <option>Benzin</option>
             <option>Diesel</option>
             <option>Elektro</option>
@@ -434,11 +465,6 @@
             disabled={!isElectric}
           />
           <div class="hint">kW</div>
-        </div>
-        <div class="form-field">
-          <label for="car-thg">THG-Quote</label>
-          <input id="car-thg" bind:value={draft.thg} inputmode="decimal" disabled={!isElectric} />
-          <div class="hint">€/Jahr</div>
         </div>
       </div>
     </div>

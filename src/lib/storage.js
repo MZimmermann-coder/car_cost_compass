@@ -197,5 +197,3 @@ export async function saveFileAs(existingHtml) {
   URL.revokeObjectURL(url);
   resetDirty();
 }
-
-

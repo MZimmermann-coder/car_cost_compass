@@ -1,6 +1,6 @@
 ﻿<script>
   import { formatCurrency, formatNumber } from "../lib/format.js";
-  import { getPurchasePriceAfterDiscount, num } from "../lib/compute.js";
+  import { getBafaAmount, getPurchasePriceAfterDiscount, num } from "../lib/compute.js";
 
   let {
     rows = [],
@@ -17,6 +17,10 @@
     y: 0,
     visible: false
   });
+
+  const showEstimatedRestwert = $derived(
+    rows.some((row) => row.usesCustomFiveYearResidualValue)
+  );
 
   function getDepreciationRate(age, settingsValue) {
     const depr = settingsValue?.depr || {};
@@ -66,7 +70,7 @@
     const listPrice = num(car.kaufpreis);
     const purchasePrice = getPurchasePriceAfterDiscount(car);
     const appliedDiscount = Math.max(0, listPrice - purchasePrice);
-    const bafaAmount = isPurchase && isNew ? num(car.bafaFoerderung) : 0;
+    const bafaAmount = getBafaAmount(car, settings);
     const fundedPurchasePrice = Math.max(0, purchasePrice - bafaAmount);
     const oppRate = num(settings.opportunitaet) / 100;
     const yearlyKm = num(settings.kmPerYear);
@@ -79,7 +83,9 @@
     const rate = getDepreciationRate(age, settings);
     const prevRestwert = rows[index - 1]?.restwert ?? listPrice;
     const baseValue = row.year === 1 ? listPrice : prevRestwert;
-    const estimatedDepreciation = baseValue - row.restwert;
+    const appliedDepreciation = baseValue - row.restwert;
+    const estimatedDepreciation = row.estimatedDepreciation ?? appliedDepreciation;
+    const usesCustomFiveYearResidualValue = Boolean(row.usesCustomFiveYearResidualValue);
 
     const listenpreisTip = isPurchase
       ? buildTooltip([
@@ -107,13 +113,13 @@
         ])
       : buildTooltip(["Keine steuerliche Mehrbelastung", "0 €"]);
 
-    const bafaFoerderungTip = isPurchase && isNew && includeDepreciation
+    const bafaFoerderungTip = bafaAmount > 0 && includeDepreciation
       ? buildTooltip([
-          "BAFA-Förderung (Abzug nur im Jahr 1 bei Neuwagen)",
+          "BAFA-Förderung (Abzug nur im Jahr 1 bei neuen Elektrofahrzeugen)",
           formatCurrency(-bafaAmount)
         ])
       : buildTooltip([
-          !includeDepreciation && isPurchase && isNew
+          !includeDepreciation && bafaAmount > 0
             ? "BAFA-Förderung wird zusammen mit dem Wertverlust nicht im TCO berücksichtigt"
             : "Keine BAFA-Förderung",
           "0 €"
@@ -143,17 +149,22 @@
     ]);
 
     const thgTip = isElectric
-      ? buildTooltip([`THG-Quote: -${formatCurrency(num(car.thg))} pro Jahr`, formatCurrency(row.thg)])
+      ? buildTooltip([`THG-Quote: -${formatCurrency(num(settings.thg))} pro Jahr`, formatCurrency(row.thg)])
       : buildTooltip(["Keine THG-Quote", "0 €"]);
 
     const wertverlustTip = isPurchase && includeDepreciation
       ? buildTooltip([
-          `Basiswert ${formatCurrency(baseValue)} x ${formatNumber(rate)}%`,
+          usesCustomFiveYearResidualValue
+            ? `Basisschätzung ${formatCurrency(estimatedDepreciation)} x Kalibrierungsfaktor ${formatCompactNumber(row.depreciationCalibrationFactor, 3)}`
+            : `Basiswert ${formatCurrency(baseValue)} x ${formatNumber(rate)}%`,
+          usesCustomFiveYearResidualValue
+            ? `Kalibriert auf ${formatCurrency(num(car.restwertNach5Jahren))} Restwert nach 5 Jahren`
+            : "",
           formatCurrency(row.wertverlust)
         ])
       : buildTooltip([
           isPurchase
-            ? `Geschätzter Wertverlust ${formatCurrency(estimatedDepreciation)} wird nicht im TCO berücksichtigt`
+            ? `${usesCustomFiveYearResidualValue ? "Kalibrierter" : "Geschätzter"} Wertverlust ${formatCurrency(appliedDepreciation)} wird nicht im TCO berücksichtigt`
             : "Kein Wertverlust bei Leasing",
           "0 €"
         ]);
@@ -179,10 +190,22 @@
 
     const restwertTip = isPurchase
       ? buildTooltip([
-          `Basiswert ${formatCurrency(baseValue)} - geschätzter Wertverlust ${formatCurrency(estimatedDepreciation)}`,
+          usesCustomFiveYearResidualValue
+            ? `Vorjahreswert ${formatCurrency(baseValue)} - kalibrierter Wertverlust ${formatCurrency(appliedDepreciation)}`
+            : `Basiswert ${formatCurrency(baseValue)} - geschätzter Wertverlust ${formatCurrency(appliedDepreciation)}`,
+          usesCustomFiveYearResidualValue
+            ? `Kurve endet nach 5 Jahren bei ${formatCurrency(num(car.restwertNach5Jahren))}`
+            : "",
           formatCurrency(row.restwert)
         ])
       : buildTooltip(["Kein Restwert bei Leasing", "0 €"]);
+
+    const estimatedRestwertTip = isPurchase
+      ? buildTooltip([
+          "Unsere unveränderte Schätzung aus den prozentualen Altersstaffeln",
+          `Ohne Kalibrierung auf den eingegebenen 5-Jahres-Restwert: ${formatCurrency(row.estimatedRestwert)}`
+        ])
+      : buildTooltip(["Keine Restwertschätzung bei Leasing", "0 €"]);
 
     return {
       listenpreis: listenpreisTip,
@@ -198,7 +221,8 @@
       opportunitaet: opportunitaetTip,
       total: totalTip,
       cumulative: cumulativeTip,
-      restwert: restwertTip
+      restwert: restwertTip,
+      estimatedRestwert: estimatedRestwertTip
     };
   }
 
@@ -255,7 +279,10 @@
         <th>Opportunität</th>
         <th>Jahreskosten (TCO)</th>
         <th>TCO kumuliert</th>
-        <th>Restwert</th>
+        <th>{showEstimatedRestwert ? "Restwert (kalibriert)" : "Restwert"}</th>
+        {#if showEstimatedRestwert}
+          <th>Restwert (eigene Schätzung)</th>
+        {/if}
       </tr>
     </thead>
     <tbody>
@@ -281,6 +308,11 @@
           <td class="has-tooltip" data-tooltip={tips.total}>{formatCurrency(row.total)}</td>
           <td class="has-tooltip" data-tooltip={tips.cumulative}>{formatCurrency(row.cumulative)}</td>
           <td class="has-tooltip" data-tooltip={tips.restwert}>{formatCurrency(row.restwert)}</td>
+          {#if showEstimatedRestwert}
+            <td class="has-tooltip" data-tooltip={tips.estimatedRestwert}>
+              {formatCurrency(row.estimatedRestwert)}
+            </td>
+          {/if}
         </tr>
       {/each}
     </tbody>

@@ -93,6 +93,26 @@
         />
         <div class="hint unit-hint">%</div>
       </div>
+      <div class="form-field">
+        <label for="settings-bafa-foerderung">BAFA-Förderung</label>
+        <input
+          id="settings-bafa-foerderung"
+          bind:value={appState.settings.bafaFoerderung}
+          inputmode="decimal"
+          oninput={handleInput}
+        />
+        <div class="hint unit-hint">€ einmalig pro Elektro-Neuwagen</div>
+      </div>
+      <div class="form-field">
+        <label for="settings-thg">THG-Quote</label>
+        <input
+          id="settings-thg"
+          bind:value={appState.settings.thg}
+          inputmode="decimal"
+          oninput={handleInput}
+        />
+        <div class="hint unit-hint">€/Jahr</div>
+      </div>
     </div>
   </section>
 

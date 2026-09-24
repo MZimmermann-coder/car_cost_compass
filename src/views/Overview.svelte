@@ -3,6 +3,7 @@
   import {
     computeOverviewMetrics,
     computeRankings,
+    getBafaAmount,
     getEffectivePurchasePrice,
     num
   } from "../lib/compute.js";
@@ -26,11 +27,15 @@
     { key: "modell", label: "Modell" },
     { key: "modellvariante", label: "Modellvariante" },
     { key: "baujahr", label: "Baujahr" },
+    { key: "kofferraumVolumen", label: "Kofferraum (l)" },
+    { key: "laenge", label: "Länge (mm)" },
+    { key: "breite", label: "Breite (mm)" },
+    { key: "hoehe", label: "Höhe (mm)" },
     { key: "beschaffungsart", label: "Beschaffungsart" },
     { key: "kaufpreis", label: "Listenpreis" },
     { key: "rabatt", label: "Rabatt" },
     { key: "bafaFoerderung", label: "BAFA Förderung" },
-    { key: "effektiverKaufpreis", label: "Kaufpreis nach Rabatt & BAFA" },
+    { key: "effektiverKaufpreis", label: "Tatsächlicher Preis" },
     { key: "leasingrate", label: "Leasingrate" },
     { key: "versicherung", label: "Versicherung / Monat" },
     { key: "versicherungsart", label: "Versicherungsart" },
@@ -167,6 +172,14 @@
     return map[normalized] || normalized;
   }
 
+  function getBrandLogoUrl(brand) {
+    if (normalizeBrand(brand) === "cupra") {
+      return "https://upload.wikimedia.org/wikipedia/commons/e/ef/Cupra_symbol.svg";
+    }
+    const slug = getBrandSlug(brand);
+    return slug ? `https://cdn.simpleicons.org/${slug}/1a1a1a` : "";
+  }
+
   function getBrandInitials(brand) {
     const text = (brand || "").trim();
     if (!text) return "CC";
@@ -183,11 +196,15 @@
     if (key === "modell") return row.car.modell;
     if (key === "modellvariante") return row.car.modellvariante;
     if (key === "baujahr") return num(row.car.baujahr);
+    if (key === "kofferraumVolumen") return num(row.car.kofferraumVolumen);
+    if (key === "laenge") return num(row.car.laenge);
+    if (key === "breite") return num(row.car.breite);
+    if (key === "hoehe") return num(row.car.hoehe);
     if (key === "beschaffungsart") return row.car.beschaffungsart;
     if (key === "kaufpreis") return num(row.car.kaufpreis);
     if (key === "rabatt") return num(row.car.rabatt);
-    if (key === "bafaFoerderung") return num(row.car.bafaFoerderung);
-    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car);
+    if (key === "bafaFoerderung") return getBafaAmount(row.car, appState.settings);
+    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car, appState.settings);
     if (key === "leasingrate") return num(row.car.leasingrate);
     if (key === "versicherung") return num(row.car.versicherung);
     if (key === "versicherungsart") return row.car.versicherungsart;
@@ -209,8 +226,8 @@
   function getNumericValue(row, key) {
     if (key === "kaufpreis") return num(row.car.kaufpreis);
     if (key === "rabatt") return num(row.car.rabatt);
-    if (key === "bafaFoerderung") return num(row.car.bafaFoerderung);
-    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car);
+    if (key === "bafaFoerderung") return getBafaAmount(row.car, appState.settings);
+    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car, appState.settings);
     if (key === "leasingrate") return num(row.car.leasingrate);
     if (key === "versicherung") return num(row.car.versicherung);
     if (key === "wartung") return num(row.car.wartung);
@@ -250,8 +267,8 @@
   function formatCell(row, key) {
     if (key === "kaufpreis") return formatCurrency(num(row.car.kaufpreis));
     if (key === "rabatt") return formatCurrency(num(row.car.rabatt));
-    if (key === "bafaFoerderung") return formatCurrency(num(row.car.bafaFoerderung));
-    if (key === "effektiverKaufpreis") return formatCurrency(getEffectivePurchasePrice(row.car));
+    if (key === "bafaFoerderung") return formatCurrency(getBafaAmount(row.car, appState.settings));
+    if (key === "effektiverKaufpreis") return formatCurrency(getEffectivePurchasePrice(row.car, appState.settings));
     if (key === "leasingrate") return formatCurrency(num(row.car.leasingrate));
     if (key === "versicherung") return formatCurrency(num(row.car.versicherung));
     if (key === "versicherungsart") return row.car.versicherungsart || "-";
@@ -259,6 +276,12 @@
     if (key === "reparatur") return formatCurrency(num(row.car.reparatur));
     if (key === "batterie") return formatNumber(num(row.car.batterie));
     if (key === "winterreichweite") return formatNumber(num(row.car.winterreichweite));
+    if (key === "kofferraumVolumen") {
+      return num(row.car.kofferraumVolumen) ? `${formatNumber(num(row.car.kofferraumVolumen))} l` : "-";
+    }
+    if (key === "laenge" || key === "breite" || key === "hoehe") {
+      return num(row.car[key]) ? `${formatNumber(num(row.car[key]))} mm` : "-";
+    }
     if (key === "wertverlust") return formatCurrency(row.metrics.wertverlust);
     if (key === "tcoMonat") return formatCurrency(row.metrics.tcoMonat);
     if (key === "tcoJahr") return formatCurrency(row.metrics.tcoJahr);
@@ -363,8 +386,7 @@
               {@const cellValue = getNumericValue(row, column.key)}
               <td class={getHighlightClass(column.key, cellValue)}>
                 {#if column.key === "marke"}
-                  {@const slug = getBrandSlug(row.car.marke)}
-                  {@const logoUrl = slug ? `https://cdn.simpleicons.org/${slug}/1a1a1a` : ""}
+                  {@const logoUrl = getBrandLogoUrl(row.car.marke)}
                   <div class={`brand-cell ${logoUrl ? "" : "logo-failed"}`}>
                     {#if logoUrl}
                       <img

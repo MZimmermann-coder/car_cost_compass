@@ -34,30 +34,57 @@
   }
 
   function buildData(dataRows) {
+    const showEstimatedRestwert = dataRows.some((row) => row.usesCustomFiveYearResidualValue);
+    const datasets = [
+      {
+        label: "Jahreskosten (TCO)",
+        data: dataRows.map((row) => row.total),
+        borderColor: "#b85d25",
+        backgroundColor: "rgba(184, 93, 37, 0.18)",
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+        pointHoverRadius: 5
+      },
+      {
+        label: "TCO kumuliert",
+        data: dataRows.map((row) => row.cumulative),
+        borderColor: "#2f6d5a",
+        backgroundColor: "rgba(47, 109, 90, 0.2)",
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+        pointHoverRadius: 5
+      },
+      {
+        label: showEstimatedRestwert ? "Restwert (kalibriert)" : "Restwert",
+        data: dataRows.map((row) => row.restwert),
+        borderColor: "#315f8c",
+        backgroundColor: "transparent",
+        fill: false,
+        tension: 0.25,
+        pointRadius: 3,
+        pointHoverRadius: 5
+      }
+    ];
+
+    if (showEstimatedRestwert) {
+      datasets.push({
+        label: "Restwert (eigene Schätzung)",
+        data: dataRows.map((row) => row.estimatedRestwert),
+        borderColor: "#71869b",
+        backgroundColor: "transparent",
+        borderDash: [7, 5],
+        fill: false,
+        tension: 0.25,
+        pointRadius: 2,
+        pointHoverRadius: 5
+      });
+    }
+
     return {
       labels: dataRows.map((row) => `Jahr ${row.year}`),
-      datasets: [
-        {
-          label: "Jahreskosten (TCO)",
-          data: dataRows.map((row) => row.total),
-          borderColor: "#b85d25",
-          backgroundColor: "rgba(184, 93, 37, 0.18)",
-          fill: true,
-          tension: 0.35,
-          pointRadius: 3,
-          pointHoverRadius: 5
-        },
-        {
-          label: "TCO kumuliert",
-          data: dataRows.map((row) => row.cumulative),
-          borderColor: "#2f6d5a",
-          backgroundColor: "rgba(47, 109, 90, 0.2)",
-          fill: true,
-          tension: 0.35,
-          pointRadius: 3,
-          pointHoverRadius: 5
-        }
-      ]
+      datasets
     };
   }
 
@@ -120,10 +147,7 @@
     }
     const index = rows.findIndex((row) => row.year === year);
     if (index === -1) return;
-    const active = [
-      { datasetIndex: 0, index },
-      { datasetIndex: 1, index }
-    ];
+    const active = chart.data.datasets.map((_dataset, datasetIndex) => ({ datasetIndex, index }));
     chart.setActiveElements(active);
     const meta = chart.getDatasetMeta(1);
     const point = meta?.data?.[index];
@@ -180,7 +204,7 @@
   {:else}
     <canvas
       bind:this={canvas}
-      aria-label="Kostenverlauf"
+      aria-label="Kosten- und Restwertverlauf"
       onmouseleave={() => onHoverYear && onHoverYear(null)}
     ></canvas>
   {/if}

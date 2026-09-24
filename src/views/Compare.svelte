@@ -12,6 +12,7 @@
   import {
     computeOverviewMetrics,
     computeYearlyBreakdown,
+    getBafaAmount,
     getEffectivePurchasePrice,
     num
   } from "../lib/compute.js";
@@ -91,6 +92,15 @@
         { key: "batterie", label: "Batterie", format: "number", unit: "kWh", hideZero: true, better: "higher" },
         { key: "winterreichweite", label: "Winterreichweite", format: "number", unit: "km", hideZero: true, better: "higher" }
       ]
+    },
+    {
+      title: "Raum & Abmessungen",
+      rows: [
+        { key: "kofferraumVolumen", label: "Kofferraumvolumen", format: "number", unit: "l", hideZero: true, better: "higher" },
+        { key: "laenge", label: "Länge", format: "number", unit: "mm", hideZero: true },
+        { key: "breite", label: "Breite ohne Außenspiegel", format: "number", unit: "mm", hideZero: true },
+        { key: "hoehe", label: "Höhe", format: "number", unit: "mm", hideZero: true }
+      ]
     }
   ]);
 
@@ -149,8 +159,8 @@
     if (key === "wertverlust") return metrics?.wertverlust ?? 0;
     if (key === "kaufpreis") return car.beschaffungsart === "Kauf" ? num(car.kaufpreis) : 0;
     if (key === "rabatt") return car.beschaffungsart === "Kauf" ? num(car.rabatt) : 0;
-    if (key === "bafaFoerderung") return car.beschaffungsart === "Kauf" ? num(car.bafaFoerderung) : 0;
-    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(car);
+    if (key === "bafaFoerderung") return getBafaAmount(car, appState.settings);
+    if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(car, appState.settings);
     if (key === "leasingrate") return car.beschaffungsart === "Leasing" ? num(car.leasingrate) : 0;
     if (key === "versicherung") return num(car.versicherung);
     if (key === "wartung") return num(car.wartung);
@@ -159,6 +169,10 @@
     if (key === "verbrauch") return num(car.verbrauch);
     if (key === "batterie") return num(car.batterie);
     if (key === "winterreichweite") return num(car.winterreichweite);
+    if (key === "kofferraumVolumen") return num(car.kofferraumVolumen);
+    if (key === "laenge") return num(car.laenge);
+    if (key === "breite") return num(car.breite);
+    if (key === "hoehe") return num(car.hoehe);
     if (key === "neu") return car.neu || "-";
     if (key === "beschaffungsart") return car.beschaffungsart || "-";
     if (key === "kraftstoffart") return car.kraftstoffart || "-";

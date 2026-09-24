@@ -3,6 +3,7 @@
   import {
     computeOverviewMetrics,
     computeYearlyBreakdown,
+    getBafaAmount,
     getPurchasePriceAfterDiscount,
     num
   } from "../lib/compute.js";
@@ -74,12 +75,20 @@
         label: "Listenpreis",
         value: num(car.kaufpreis) ? formatCurrency(num(car.kaufpreis)) : "-"
       });
+      items.splice(2, 0, {
+        label: "Geschätzter Restwert nach 5 Jahren",
+        value: String(car.restwertNach5Jahren ?? "").trim()
+          ? formatCurrency(num(car.restwertNach5Jahren))
+          : "-"
+      });
       if (isNew) {
-        items.splice(2, 0,
+        items.splice(3, 0,
           { label: "Rabatt", value: num(car.rabatt) ? formatCurrency(num(car.rabatt)) : "-" },
           {
             label: "BAFA Förderung",
-            value: num(car.bafaFoerderung) ? formatCurrency(num(car.bafaFoerderung)) : "-"
+            value: getBafaAmount(car, appState.settings)
+              ? formatCurrency(getBafaAmount(car, appState.settings))
+              : "-"
           },
           {
             label: "Steuerliche Mehrbelastung",
@@ -104,12 +113,36 @@
         },
         {
           label: "THG-Quote",
-          value: num(car.thg) ? `${formatNumber(num(car.thg))} €/Jahr` : "-"
+          value: num(appState.settings.thg)
+            ? `${formatNumber(num(appState.settings.thg))} €/Jahr`
+            : "-"
         }
       );
     }
 
     return items;
+  });
+
+  const dimensionItems = $derived.by(() => {
+    if (!car) return [];
+    return [
+      {
+        label: "Kofferraumvolumen",
+        value: num(car.kofferraumVolumen) ? `${formatNumber(num(car.kofferraumVolumen))} l` : "-"
+      },
+      {
+        label: "Länge",
+        value: num(car.laenge) ? `${formatNumber(num(car.laenge))} mm` : "-"
+      },
+      {
+        label: "Breite ohne Außenspiegel",
+        value: num(car.breite) ? `${formatNumber(num(car.breite))} mm` : "-"
+      },
+      {
+        label: "Höhe",
+        value: num(car.hoehe) ? `${formatNumber(num(car.hoehe))} mm` : "-"
+      }
+    ];
   });
 
   const summaryTooltips = $derived.by(() => {
@@ -119,17 +152,19 @@
       ? num(car.rabatt)
       : 0;
     const purchasePrice = getPurchasePriceAfterDiscount(car);
-    const bafaAmount = car.beschaffungsart === "Kauf" && car.neu === "Neu"
-      ? num(car.bafaFoerderung)
-      : 0;
+    const bafaAmount = getBafaAmount(car, appState.settings);
     const cumulative = breakdown.length ? breakdown[breakdown.length - 1].cumulative : 0;
     const tcoTotal = metrics.tcoTotal ?? 0;
     const tcoMonat = planningYears > 0 ? tcoTotal / (planningYears * 12) : 0;
     const restwert = breakdown.length ? breakdown[breakdown.length - 1].restwert : 0;
 
     const depreciationLabel = uiState.includeDepreciation
-      ? `Wertverlust, Rabatt und BAFA-Förderung berücksichtigt; BAFA-Förderung ${formatCurrency(bafaAmount)} ist im 1. Jahr enthalten`
-      : "Wertverlust, Rabatt und BAFA-Förderung nicht im TCO berücksichtigt";
+      ? bafaAmount > 0
+        ? `Wertverlust und Rabatt berücksichtigt; BAFA-Förderung ${formatCurrency(bafaAmount)} ist im 1. Jahr enthalten`
+        : "Wertverlust und Rabatt berücksichtigt; keine BAFA-Förderung für dieses Fahrzeug"
+      : bafaAmount > 0
+        ? "Wertverlust, Rabatt und BAFA-Förderung nicht im TCO berücksichtigt"
+        : "Wertverlust und Rabatt nicht im TCO berücksichtigt";
 
     return {
       tcoTotal: `Listenpreis ${formatCurrency(listPrice)} - Rabatt ${formatCurrency(discount)} = Kaufpreis nach Rabatt ${formatCurrency(purchasePrice)}; kumulierte wirtschaftliche Jahreskosten ${formatCurrency(cumulative)} = TCO ${formatCurrency(tcoTotal)}; der Kaufpreis wird nicht zusätzlich zu Wertverlust und Restwert addiert; ${depreciationLabel}`,
@@ -187,15 +222,28 @@
         onEdit={openEditor}
         variant="detail"
       />
-      <div class="card info-card">
-        <h3>Weitere Fahrzeugdaten</h3>
-        <div class="info-grid">
-          {#each infoItems as item}
-            <div class="info-item">
-              <span class="info-label">{item.label}</span>
-              <span class="info-value">{item.value}</span>
-            </div>
-          {/each}
+      <div class="detail-info-stack">
+        <div class="card info-card">
+          <h3>Weitere Fahrzeugdaten</h3>
+          <div class="info-grid">
+            {#each infoItems as item}
+              <div class="info-item">
+                <span class="info-label">{item.label}</span>
+                <span class="info-value">{item.value}</span>
+              </div>
+            {/each}
+          </div>
+        </div>
+        <div class="card info-card dimensions-card">
+          <h3>Maße & Stauraum</h3>
+          <div class="info-grid">
+            {#each dimensionItems as item}
+              <div class="info-item">
+                <span class="info-label">{item.label}</span>
+                <span class="info-value">{item.value}</span>
+              </div>
+            {/each}
+          </div>
         </div>
       </div>
     </div>

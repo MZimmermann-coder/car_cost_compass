@@ -274,7 +274,7 @@
           checked={uiState.includeDepreciation}
           onchange={(event) => setDepreciationMode(event.currentTarget.checked)}
         />
-        <span>Fahrzeugwert (Wertverlust, Rabatt, BAFA) im TCO</span>
+        <span>Fahrzeugwert (Wertverlust, Rabatt, BAFA bei Elektro) im TCO</span>
       </label>
       <button class="button ghost" onclick={() => navigateTo("comparison")}>Vergleichen</button>
       <button class="button" onclick={() => openEditor(null)}>Fahrzeug hinzufügen</button>
