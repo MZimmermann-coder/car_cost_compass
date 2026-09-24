@@ -82,6 +82,10 @@
         value: car.onePedalBisStillstand || "-"
       },
       {
+        label: "Sitzbelüftung verfügbar",
+        value: car.sitzbelueftungVerfuegbar ? "Ja" : "Nein"
+      },
+      {
         label: "Verbrauch",
         value: num(car.verbrauch) ? `${formatNumber(num(car.verbrauch))} ${consumptionUnit}` : "-"
       }

@@ -847,6 +847,52 @@ tbody tr:nth-child(odd) {
   background: #f0ece7;
 }
 
+.garage-table {
+  --garage-brand-column-width: 150px;
+  --garage-model-column-width: 180px;
+}
+
+.garage-table thead th:nth-child(1),
+.garage-table tbody td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  width: var(--garage-brand-column-width);
+  min-width: var(--garage-brand-column-width);
+  max-width: var(--garage-brand-column-width);
+}
+
+.garage-table thead th:nth-child(2),
+.garage-table tbody td:nth-child(2) {
+  position: sticky;
+  left: var(--garage-brand-column-width);
+  width: var(--garage-model-column-width);
+  min-width: var(--garage-model-column-width);
+  max-width: var(--garage-model-column-width);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.garage-table thead th:nth-child(1),
+.garage-table thead th:nth-child(2) {
+  z-index: 2;
+}
+
+.garage-table tbody td:nth-child(1),
+.garage-table tbody td:nth-child(2) {
+  z-index: 1;
+  background: var(--card);
+}
+
+.garage-table tbody tr:nth-child(odd) td:nth-child(1),
+.garage-table tbody tr:nth-child(odd) td:nth-child(2) {
+  background: #faf8f6;
+}
+
+.garage-table tbody tr:hover td:nth-child(1),
+.garage-table tbody tr:hover td:nth-child(2) {
+  background: #f0ece7;
+}
+
 .comparison-selection,
 .comparison-results {
   margin-bottom: 1.25rem;
@@ -1196,6 +1242,23 @@ tbody tr:nth-child(odd) {
   font-size: 0.8rem;
   color: var(--muted);
   margin-bottom: 0.25rem;
+}
+
+.form-field .checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 .form-field-wide {

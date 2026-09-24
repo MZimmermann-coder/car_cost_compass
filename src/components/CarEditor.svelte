@@ -521,6 +521,23 @@
     </div>
 
     <div class="card">
+      <h3>Komfort</h3>
+      <div class="form-grid editor-form-grid">
+        <div class="form-field form-field-wide">
+          <label class="checkbox-field" for="car-sitzbelueftung-verfuegbar">
+            <input
+              id="car-sitzbelueftung-verfuegbar"
+              type="checkbox"
+              bind:checked={draft.sitzbelueftungVerfuegbar}
+            />
+            <span>Sitzbelüftung verfügbar</span>
+          </label>
+          <div class="hint">Auch als aufpreispflichtige Sonderausstattung zählt.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <h3>Notizen</h3>
       <div class="form-field">
         <label for="car-kommentar">Kommentar</label>

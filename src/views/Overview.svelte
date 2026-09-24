@@ -47,6 +47,7 @@
     { key: "batterie", label: "Nettobatterie" },
     { key: "winterreichweite", label: "Winterreichweite" },
     { key: "onePedalBisStillstand", label: "One-Pedal bis Stillstand" },
+    { key: "sitzbelueftungVerfuegbar", label: "Sitzbelüftung" },
     { key: "wertverlust", label: "Wertverlust" },
     { key: "tcoMonat", label: "TCO/Monat" },
     { key: "tcoJahr", label: "TCO/Jahr" },
@@ -57,16 +58,19 @@
     { key: "konfigurationslink", label: "Konfiguration" }
   ]);
 
-  const highlightKeys = [
-    "batterie",
-    "winterreichweite",
-    "tcoMonat",
-    "tcoJahr",
-    "tcoKm",
-    "tcoTotal"
-  ];
-
-  const higherBetter = ["winterreichweite", "batterie"];
+  const highlightDirections = {
+    effektiverKaufpreis: "lower",
+    leasingrate: "lower",
+    versicherung: "lower",
+    wartung: "lower",
+    reparatur: "lower",
+    wertverlust: "lower",
+    garantieJahre: "higher",
+    serviceintervallJahre: "higher",
+    serviceintervallKilometer: "higher",
+    winterreichweite: "higher",
+    tcoMonat: "lower"
+  };
 
   const carList = $derived.by(() => (Array.isArray(cars) ? cars : appState.cars));
 
@@ -89,7 +93,7 @@
 
   const minMaxMap = $derived.by(() => {
     const result = {};
-    for (const key of highlightKeys) {
+    for (const key of Object.keys(highlightDirections)) {
       const values = rows
         .map((row) => getNumericValue(row, key))
         .filter((value) => Number.isFinite(value) && value > 0);
@@ -214,12 +218,14 @@
     if (key === "versicherungsart") return row.car.versicherungsart;
     if (key === "wartung") return num(row.car.wartung);
     if (key === "reparatur") return num(row.car.reparatur);
+    if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "garantieJahre") return num(row.car.garantieJahre);
     if (key === "serviceintervallJahre") return num(row.car.serviceintervallJahre);
     if (key === "serviceintervallKilometer") return num(row.car.serviceintervallKilometer);
     if (key === "batterie") return num(row.car.batterie);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
     if (key === "onePedalBisStillstand") return row.car.onePedalBisStillstand;
+    if (key === "sitzbelueftungVerfuegbar") return row.car.sitzbelueftungVerfuegbar ? 1 : 0;
     if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "tcoMonat") return row.metrics.tcoMonat;
     if (key === "tcoJahr") return row.metrics.tcoJahr;
@@ -232,21 +238,16 @@
   }
 
   function getNumericValue(row, key) {
-    if (key === "kaufpreis") return num(row.car.kaufpreis);
-    if (key === "rabatt") return num(row.car.rabatt);
-    if (key === "bafaFoerderung") return getBafaAmount(row.car, appState.settings);
     if (key === "effektiverKaufpreis") return getEffectivePurchasePrice(row.car, appState.settings);
     if (key === "leasingrate") return num(row.car.leasingrate);
     if (key === "versicherung") return num(row.car.versicherung);
     if (key === "wartung") return num(row.car.wartung);
     if (key === "reparatur") return num(row.car.reparatur);
-    if (key === "batterie") return num(row.car.batterie);
+    if (key === "garantieJahre") return num(row.car.garantieJahre);
+    if (key === "serviceintervallJahre") return num(row.car.serviceintervallJahre);
+    if (key === "serviceintervallKilometer") return num(row.car.serviceintervallKilometer);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
-    if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "tcoMonat") return row.metrics.tcoMonat;
-    if (key === "tcoJahr") return row.metrics.tcoJahr;
-    if (key === "tcoKm") return row.metrics.tcoKm;
-    if (key === "tcoTotal") return row.metrics.tcoTotal;
     return NaN;
   }
 
@@ -260,7 +261,7 @@
       return "";
     }
 
-    const isHigherBetter = higherBetter.includes(key);
+    const isHigherBetter = highlightDirections[key] === "higher";
     if (isHigherBetter) {
       if (value === range.max) return "cell-best";
       if (value === range.min) return "cell-worst";
@@ -298,6 +299,7 @@
     if (key === "batterie") return formatNumber(num(row.car.batterie));
     if (key === "winterreichweite") return formatNumber(num(row.car.winterreichweite));
     if (key === "onePedalBisStillstand") return row.car.onePedalBisStillstand || "-";
+    if (key === "sitzbelueftungVerfuegbar") return row.car.sitzbelueftungVerfuegbar ? "Ja" : "Nein";
     if (key === "kofferraumVolumen") {
       return num(row.car.kofferraumVolumen) ? `${formatNumber(num(row.car.kofferraumVolumen))} l` : "-";
     }
@@ -377,7 +379,7 @@
   </div>
 {:else}
   <div class="table-wrap">
-    <table class="overview-table">
+    <table class="overview-table" class:garage-table={embedded}>
       <thead>
         <tr>
           {#each columns as column}

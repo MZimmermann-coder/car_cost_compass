@@ -92,6 +92,7 @@
         { key: "batterie", label: "Batterie", format: "number", unit: "kWh", hideZero: true, better: "higher" },
         { key: "winterreichweite", label: "Winterreichweite", format: "number", unit: "km", hideZero: true, better: "higher" },
         { key: "onePedalBisStillstand", label: "One-Pedal bis Stillstand", format: "text" },
+        { key: "sitzbelueftungVerfuegbar", label: "Sitzbelüftung", format: "availability" },
         { key: "garantieJahre", label: "Herstellergarantie", format: "number", unit: "Jahre", hideZero: true },
         { key: "serviceintervallJahre", label: "Service nach Zeit", format: "number", unit: "Jahre", hideZero: true },
         { key: "serviceintervallKilometer", label: "Service nach Strecke", format: "number", unit: "km", hideZero: true }
@@ -184,6 +185,7 @@
     if (key === "beschaffungsart") return car.beschaffungsart || "-";
     if (key === "kraftstoffart") return car.kraftstoffart || "-";
     if (key === "onePedalBisStillstand") return car.onePedalBisStillstand || "-";
+    if (key === "sitzbelueftungVerfuegbar") return Boolean(car.sitzbelueftungVerfuegbar);
     return "-";
   }
 
@@ -203,6 +205,7 @@
         : row.unit;
       return `${formatNumber(value)}${unit ? ` ${unit}` : ""}`;
     }
+    if (row.format === "availability") return value ? "Ja" : "Nein";
     return value || "-";
   }
 
