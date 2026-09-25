@@ -185,7 +185,11 @@
     if (key === "beschaffungsart") return car.beschaffungsart || "-";
     if (key === "kraftstoffart") return car.kraftstoffart || "-";
     if (key === "onePedalBisStillstand") return car.onePedalBisStillstand || "-";
-    if (key === "sitzbelueftungVerfuegbar") return Boolean(car.sitzbelueftungVerfuegbar);
+    if (key === "sitzbelueftungVerfuegbar") {
+      return typeof car.sitzbelueftungVerfuegbar === "boolean"
+        ? car.sitzbelueftungVerfuegbar
+        : null;
+    }
     return "-";
   }
 
@@ -205,7 +209,9 @@
         : row.unit;
       return `${formatNumber(value)}${unit ? ` ${unit}` : ""}`;
     }
-    if (row.format === "availability") return value ? "Ja" : "Nein";
+    if (row.format === "availability") {
+      return typeof value === "boolean" ? value ? "Ja" : "Nein" : "-";
+    }
     return value || "-";
   }
 

@@ -3,9 +3,9 @@
   import {
     appState,
     createEmptyCar,
+    deleteCar,
     markDirty,
     navigateTo,
-    removeComparisonCar,
     setIncludeDepreciation,
     setGarageMode,
     uiState,
@@ -148,9 +148,7 @@
 
   function handleDelete(car) {
     if (window.confirm("Fahrzeug wirklich löschen?")) {
-      appState.cars = appState.cars.filter((item) => item.id !== car.id);
-      removeComparisonCar(car.id);
-      markDirty();
+      deleteCar(car.id);
     }
   }
 

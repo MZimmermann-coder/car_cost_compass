@@ -1,5 +1,13 @@
 <script>
-  import { appState, navigateTo, uiState, viewCarDetail } from "../lib/state.svelte.js";
+  import {
+    appState,
+    navigateTo,
+    toggleGarageCarFavorite,
+    setGarageCarsHidden,
+    toggleGarageCarHidden,
+    uiState,
+    viewCarDetail
+  } from "../lib/state.svelte.js";
   import {
     computeOverviewMetrics,
     computeRankings,
@@ -74,8 +82,14 @@
 
   const carList = $derived.by(() => (Array.isArray(cars) ? cars : appState.cars));
 
+  const rankingCars = $derived.by(() =>
+    embedded
+      ? carList.filter((car) => !uiState.hiddenGarageCarIds.includes(car.id))
+      : carList
+  );
+
   const rows = $derived.by(() => {
-    const rankingList = computeRankings(carList, appState.settings, {
+    const rankingList = computeRankings(rankingCars, appState.settings, {
       includeDepreciation: uiState.includeDepreciation
     });
     const rankMap = new Map(rankingList.map((item) => [item.carId, item.rank]));
@@ -91,10 +105,13 @@
     });
   });
 
+  const allRowsHidden = $derived(rows.length > 0 && rows.every((row) => isRowHidden(row)));
+
   const minMaxMap = $derived.by(() => {
     const result = {};
+    const comparisonRows = embedded ? rows.filter((row) => !isRowHidden(row)) : rows;
     for (const key of Object.keys(highlightDirections)) {
-      const values = rows
+      const values = comparisonRows
         .map((row) => getNumericValue(row, key))
         .filter((value) => Number.isFinite(value) && value > 0);
       if (values.length) {
@@ -112,6 +129,12 @@
     const direction = sortDir === "asc" ? 1 : -1;
 
     copy.sort((a, b) => {
+      const aHidden = isRowHidden(a);
+      const bHidden = isRowHidden(b);
+      if (aHidden !== bHidden) {
+        return aHidden ? 1 : -1;
+      }
+
       const aValue = getSortValue(a, sortKey);
       const bValue = getSortValue(b, sortKey);
 
@@ -124,6 +147,18 @@
 
     return copy;
   });
+
+  function isRowHidden(row) {
+    return embedded && uiState.hiddenGarageCarIds.includes(row.car.id);
+  }
+
+  function isRowFavorite(row) {
+    return embedded && uiState.favoriteGarageCarIds.includes(row.car.id);
+  }
+
+  function toggleAllRows() {
+    setGarageCarsHidden(rows.map((row) => row.car.id), !allRowsHidden);
+  }
 
   function setSort(key) {
     if (sortKey === key) {
@@ -142,6 +177,8 @@
       .replace(/ö/g, "oe")
       .replace(/ü/g, "ue")
       .replace(/ß/g, "ss")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]/g, "");
   }
 
@@ -225,7 +262,11 @@
     if (key === "batterie") return num(row.car.batterie);
     if (key === "winterreichweite") return num(row.car.winterreichweite);
     if (key === "onePedalBisStillstand") return row.car.onePedalBisStillstand;
-    if (key === "sitzbelueftungVerfuegbar") return row.car.sitzbelueftungVerfuegbar ? 1 : 0;
+    if (key === "sitzbelueftungVerfuegbar") {
+      return typeof row.car.sitzbelueftungVerfuegbar === "boolean"
+        ? row.car.sitzbelueftungVerfuegbar ? 1 : 0
+        : Number.NaN;
+    }
     if (key === "wertverlust") return row.metrics.wertverlust;
     if (key === "tcoMonat") return row.metrics.tcoMonat;
     if (key === "tcoJahr") return row.metrics.tcoJahr;
@@ -299,7 +340,11 @@
     if (key === "batterie") return formatNumber(num(row.car.batterie));
     if (key === "winterreichweite") return formatNumber(num(row.car.winterreichweite));
     if (key === "onePedalBisStillstand") return row.car.onePedalBisStillstand || "-";
-    if (key === "sitzbelueftungVerfuegbar") return row.car.sitzbelueftungVerfuegbar ? "Ja" : "Nein";
+    if (key === "sitzbelueftungVerfuegbar") {
+      return typeof row.car.sitzbelueftungVerfuegbar === "boolean"
+        ? row.car.sitzbelueftungVerfuegbar ? "Ja" : "Nein"
+        : "-";
+    }
     if (key === "kofferraumVolumen") {
       return num(row.car.kofferraumVolumen) ? `${formatNumber(num(row.car.kofferraumVolumen))} l` : "-";
     }
@@ -333,6 +378,9 @@
   }
 
   function handleRowKey(event, carId) {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       viewCarDetail(carId);
@@ -382,6 +430,26 @@
     <table class="overview-table" class:garage-table={embedded}>
       <thead>
         <tr>
+          {#if embedded}
+            <th class="garage-visibility-header" aria-label="Sichtbarkeit">
+              <button
+                type="button"
+                class="garage-row-visibility"
+                aria-label={allRowsHidden ? "Alle Fahrzeuge wieder einblenden" : "Alle Fahrzeuge ausblenden"}
+                aria-pressed={allRowsHidden}
+                title={allRowsHidden ? "Alle Fahrzeuge wieder einblenden" : "Alle Fahrzeuge ausblenden"}
+                onclick={toggleAllRows}
+              >
+                <iconify-icon
+                  icon={allRowsHidden ? "mdi:eye-off-outline" : "mdi:eye-outline"}
+                  aria-hidden="true"
+                ></iconify-icon>
+              </button>
+            </th>
+            <th class="garage-favorite-header" aria-label="Favoriten">
+              <iconify-icon icon="mdi:star-outline" aria-hidden="true"></iconify-icon>
+            </th>
+          {/if}
           {#each columns as column}
             <th>
               <button
@@ -401,14 +469,53 @@
       <tbody>
         {#each sortedRows as row}
           <tr
+            class:garage-row-hidden={isRowHidden(row)}
             role="button"
             tabindex="0"
             onclick={() => viewCarDetail(row.car.id)}
             onkeydown={(event) => handleRowKey(event, row.car.id)}
           >
+            {#if embedded}
+              <td class="garage-visibility-cell">
+                <button
+                  type="button"
+                  class="garage-row-visibility"
+                  aria-label={isRowHidden(row) ? "Fahrzeug wieder einblenden" : "Fahrzeug ausblenden"}
+                  aria-pressed={isRowHidden(row)}
+                  title={isRowHidden(row) ? "Fahrzeug wieder einblenden" : "Fahrzeug ausblenden"}
+                  onclick={(event) => {
+                    event.stopPropagation();
+                    toggleGarageCarHidden(row.car.id);
+                  }}
+                >
+                  <iconify-icon
+                    icon={isRowHidden(row) ? "mdi:eye-off-outline" : "mdi:eye-outline"}
+                    aria-hidden="true"
+                  ></iconify-icon>
+                </button>
+              </td>
+              <td class="garage-favorite-cell">
+                <button
+                  type="button"
+                  class="garage-row-favorite"
+                  aria-label={isRowFavorite(row) ? "Favorit entfernen" : "Als Favorit markieren"}
+                  aria-pressed={isRowFavorite(row)}
+                  title={isRowFavorite(row) ? "Favorit entfernen" : "Als Favorit markieren"}
+                  onclick={(event) => {
+                    event.stopPropagation();
+                    toggleGarageCarFavorite(row.car.id);
+                  }}
+                >
+                  <iconify-icon
+                    icon={isRowFavorite(row) ? "mdi:star" : "mdi:star-outline"}
+                    aria-hidden="true"
+                  ></iconify-icon>
+                </button>
+              </td>
+            {/if}
             {#each columns as column}
               {@const cellValue = getNumericValue(row, column.key)}
-              <td class={getHighlightClass(column.key, cellValue)}>
+              <td class={isRowHidden(row) ? "" : getHighlightClass(column.key, cellValue)}>
                 {#if column.key === "marke"}
                   {@const logoUrl = getBrandLogoUrl(row.car.marke)}
                   <div class={`brand-cell ${logoUrl ? "" : "logo-failed"}`}>

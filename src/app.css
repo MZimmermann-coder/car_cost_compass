@@ -848,6 +848,8 @@ tbody tr:nth-child(odd) {
 }
 
 .garage-table {
+  --garage-visibility-column-width: 48px;
+  --garage-favorite-column-width: 40px;
   --garage-brand-column-width: 150px;
   --garage-model-column-width: 180px;
 }
@@ -856,15 +858,36 @@ tbody tr:nth-child(odd) {
 .garage-table tbody td:nth-child(1) {
   position: sticky;
   left: 0;
-  width: var(--garage-brand-column-width);
-  min-width: var(--garage-brand-column-width);
-  max-width: var(--garage-brand-column-width);
+  width: var(--garage-visibility-column-width);
+  min-width: var(--garage-visibility-column-width);
+  max-width: var(--garage-visibility-column-width);
+  padding: 0.25rem;
 }
 
 .garage-table thead th:nth-child(2),
 .garage-table tbody td:nth-child(2) {
   position: sticky;
-  left: var(--garage-brand-column-width);
+  left: var(--garage-visibility-column-width);
+  width: var(--garage-favorite-column-width);
+  min-width: var(--garage-favorite-column-width);
+  max-width: var(--garage-favorite-column-width);
+  padding: 0.25rem;
+  text-align: center;
+}
+
+.garage-table thead th:nth-child(3),
+.garage-table tbody td:nth-child(3) {
+  position: sticky;
+  left: calc(var(--garage-visibility-column-width) + var(--garage-favorite-column-width));
+  width: var(--garage-brand-column-width);
+  min-width: var(--garage-brand-column-width);
+  max-width: var(--garage-brand-column-width);
+}
+
+.garage-table thead th:nth-child(4),
+.garage-table tbody td:nth-child(4) {
+  position: sticky;
+  left: calc(var(--garage-visibility-column-width) + var(--garage-favorite-column-width) + var(--garage-brand-column-width));
   width: var(--garage-model-column-width);
   min-width: var(--garage-model-column-width);
   max-width: var(--garage-model-column-width);
@@ -873,24 +896,112 @@ tbody tr:nth-child(odd) {
 }
 
 .garage-table thead th:nth-child(1),
-.garage-table thead th:nth-child(2) {
+.garage-table thead th:nth-child(2),
+.garage-table thead th:nth-child(3),
+.garage-table thead th:nth-child(4) {
   z-index: 2;
 }
 
 .garage-table tbody td:nth-child(1),
-.garage-table tbody td:nth-child(2) {
+.garage-table tbody td:nth-child(2),
+.garage-table tbody td:nth-child(3),
+.garage-table tbody td:nth-child(4) {
   z-index: 1;
   background: var(--card);
 }
 
-.garage-table tbody tr:nth-child(odd) td:nth-child(1),
-.garage-table tbody tr:nth-child(odd) td:nth-child(2) {
+.garage-table tbody tr:nth-child(odd) td:nth-child(-n + 4) {
   background: #faf8f6;
 }
 
-.garage-table tbody tr:hover td:nth-child(1),
-.garage-table tbody tr:hover td:nth-child(2) {
+.garage-table tbody tr:hover td:nth-child(-n + 4) {
   background: #f0ece7;
+}
+
+.garage-table tbody tr.garage-row-hidden > td {
+  background: #eeedeb;
+  color: #817c76;
+}
+
+.garage-table tbody tr.garage-row-hidden:nth-child(odd) > td {
+  background: #e9e8e6;
+}
+
+.garage-table tbody tr.garage-row-hidden:hover > td {
+  background: #deddd9;
+}
+
+.garage-row-visibility {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.garage-row-visibility:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text);
+}
+
+.garage-row-visibility:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.garage-row-visibility iconify-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.garage-favorite-header {
+  text-align: center;
+  color: var(--muted);
+}
+
+.garage-favorite-header iconify-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.garage-row-favorite {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.garage-row-favorite[aria-pressed="true"] {
+  color: #c88718;
+}
+
+.garage-row-favorite:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #a96d0b;
+}
+
+.garage-row-favorite:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.garage-row-favorite iconify-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .comparison-selection,

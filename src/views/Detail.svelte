@@ -1,5 +1,5 @@
 ﻿<script>
-  import { appState, navigateTo, uiState } from "../lib/state.svelte.js";
+  import { appState, deleteCar, navigateTo, uiState } from "../lib/state.svelte.js";
   import {
     computeOverviewMetrics,
     computeYearlyBreakdown,
@@ -83,7 +83,9 @@
       },
       {
         label: "Sitzbelüftung verfügbar",
-        value: car.sitzbelueftungVerfuegbar ? "Ja" : "Nein"
+        value: typeof car.sitzbelueftungVerfuegbar === "boolean"
+          ? car.sitzbelueftungVerfuegbar ? "Ja" : "Nein"
+          : "-"
       },
       {
         label: "Verbrauch",
@@ -212,6 +214,15 @@
     editorOpen = false;
     editingCar = null;
   }
+
+  function handleDelete(target) {
+    if (!window.confirm("Fahrzeug wirklich löschen?")) {
+      return;
+    }
+    if (deleteCar(target.id)) {
+      navigateTo("garage", { replaceHistory: true });
+    }
+  }
 </script>
 
 {#if !car}
@@ -239,8 +250,9 @@
         metrics={metrics}
         interactive={false}
         showActions={true}
-        actions={{ edit: true, duplicate: false, view: false, delete: false }}
+        actions={{ edit: true, duplicate: false, view: false, delete: true }}
         onEdit={openEditor}
+        onDelete={handleDelete}
         variant="detail"
       />
       <div class="detail-info-stack">
