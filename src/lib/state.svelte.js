@@ -106,6 +106,7 @@ const uiStorageKey = "car-cost-compass-ui-state";
 const validViews = new Set(["garage", "settings", "detail", "comparison"]);
 const validGarageModes = new Set(["cards", "table"]);
 const maxComparisonCars = 4;
+let hasDatabaseFavorites = false;
 
 function persistUiState() {
   if (typeof localStorage === "undefined") {
@@ -157,7 +158,7 @@ function restoreUiState() {
         stored.hiddenGarageCarIds.filter((id) => typeof id === "string" && validCarIds.has(id))
       )];
     }
-    if (Array.isArray(stored.favoriteGarageCarIds)) {
+    if (Array.isArray(stored.favoriteGarageCarIds) && !hasDatabaseFavorites) {
       const validCarIds = new Set(appState.cars.map((car) => car.id));
       uiState.favoriteGarageCarIds = [...new Set(
         stored.favoriteGarageCarIds.filter((id) => typeof id === "string" && validCarIds.has(id))
@@ -288,6 +289,8 @@ export function setGarageCarsFavorite(carIds, favorite) {
     }
   }
   uiState.favoriteGarageCarIds = [...favoriteIds];
+  hasDatabaseFavorites = true;
+  markDirty();
   persistUiState();
 }
 
@@ -326,11 +329,18 @@ export function normalizeState(raw) {
     delete normalizedCar.thg;
     return normalizedCar;
   });
+  const validCarIds = new Set(normalizedCars.map((car) => car.id));
+  const normalizedFavoriteIds = Array.isArray(safe.favoriteGarageCarIds)
+    ? [...new Set(
+        safe.favoriteGarageCarIds.filter((id) => typeof id === "string" && validCarIds.has(id))
+      )]
+    : null;
 
   return {
     version: 1,
     settings: normalizedSettings,
-    cars: normalizedCars
+    cars: normalizedCars,
+    favoriteGarageCarIds: normalizedFavoriteIds
   };
 }
 
@@ -339,6 +349,10 @@ export function loadState(newState) {
   appState.version = normalized.version;
   appState.settings = normalized.settings;
   appState.cars = normalized.cars;
+  hasDatabaseFavorites = Array.isArray(normalized.favoriteGarageCarIds);
+  uiState.favoriteGarageCarIds = hasDatabaseFavorites
+    ? normalized.favoriteGarageCarIds
+    : [];
   const validCarIds = new Set(normalized.cars.map((car) => car.id));
   uiState.comparisonCarIds = uiState.comparisonCarIds.filter((id) => validCarIds.has(id));
   uiState.hiddenGarageCarIds = uiState.hiddenGarageCarIds.filter((id) => validCarIds.has(id));

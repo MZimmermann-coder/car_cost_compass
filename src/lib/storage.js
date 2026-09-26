@@ -40,7 +40,8 @@ function getStateSnapshot() {
   return {
     version: appState.version,
     settings: appState.settings,
-    cars: appState.cars
+    cars: appState.cars,
+    favoriteGarageCarIds: [...uiState.favoriteGarageCarIds]
   };
 }
 
